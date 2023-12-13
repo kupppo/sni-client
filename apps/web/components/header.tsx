@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import Status from './status'
 import { useSNI } from '@/lib/sni'
@@ -9,6 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { usePathname } from 'next/navigation'
 
 const Mono = ({ children }: { children: React.ReactNode }) => (
   <span className={'text-xs'} style={{ fontFamily: 'var(--font-geist-mono)' }}>
@@ -44,7 +46,6 @@ const ConnectionStatus = () => {
   }
   if (connected) {
     const deviceDisplay = getDeviceDisplay(data.current.kind)
-    console.log(data.current)
     return (
       <Popover>
         <PopoverTrigger asChild>
@@ -82,6 +83,20 @@ const ConnectionStatus = () => {
 }
 
 export default function SiteHeader() {
+  const LINKS = [
+    {
+      href: '/',
+      label: 'Device',
+    },
+    {
+      href: '/files',
+      label: 'Files',
+    },
+    {
+      href: '/controls',
+      label: 'Controls',
+    }
+  ]
   return (
     <header
       className={cn(
@@ -89,10 +104,24 @@ export default function SiteHeader() {
       )}
     >
       <div className={cn('container flex items-center justify-between py-4')}>
-        <div className={cn('flex items-center')}>
-          <a href="/" className={cn('text-md font-normal')}>
+        <div className={cn('flex items-baseline')}>
+          <a href="/" className={cn('text-md font-normal mr-12')}>
             SNI Web Client
           </a>
+          <nav className={cn('flex items-center text-sm font-medium space-x-4')}>
+            {LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  'border-b border-transparent hover:border-primary transition-colors',
+                  usePathname() === href && 'border-primary',
+                )}
+              >
+                <div className={cn('pb-1 px-0.5')}>{label}</div>
+              </Link>
+            ))}
+          </nav>
         </div>
         <div>
           <ConnectionStatus />

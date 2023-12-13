@@ -4,6 +4,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { ThemeProvider } from '@/components/ui/theme-provider'
 import { cn } from '../lib/utils'
+import Header from '@/components/header'
 
 export const metadata: Metadata = {
   title: 'SNI Web Client',
@@ -24,11 +25,12 @@ export default function RootLayout({
       <body className={cn('min-h-screen bg-background antialiased')}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <Header />
+          <div className="container">{children}</div>
         </ThemeProvider>
       </body>
     </html>
