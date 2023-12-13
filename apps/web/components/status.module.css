@@ -1,0 +1,71 @@
+.base {
+  display: inline-flex;
+  align-items: center;
+  --size: 8px;
+  --type: 12px;
+  --color: #333;
+}
+
+.dot {
+  display: block;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background-color: var(--color);
+  transition: background-color 0.15s ease-in-out;
+}
+
+.label {
+  font-size: var(--type);
+  font-weight: normal;
+  letter-spacing: 0.35px;
+  margin-left: 8px;
+  width: 100px;
+  overflow: hidden;
+  display: block;
+  animation: statusIn 0.3s ease-in-out;
+}
+
+.mounted .label {
+  animation: labelIn 0.3s ease-in-out;
+}
+
+.disconnected {
+  --color: #333;
+}
+
+.connected {
+  --color: #50e3c2;
+}
+
+.error {
+  --color: #e60000;
+}
+
+.pending {
+  --color: #f5a623;
+}
+
+@keyframes statusIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes labelIn {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  50% {
+    opacity: 0.3;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    translate: translateY(0);
+  }
+}
