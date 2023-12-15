@@ -3,7 +3,7 @@
 import { useSNI } from '@/lib/sni'
 
 export default function DeviceView(): JSX.Element {
-  const data = useSNI()
+  const data = useSNI('devices', { refreshInterval: 50 })
   const connected = data?.connected
 
   if (data.isLoading) {
