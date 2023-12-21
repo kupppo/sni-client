@@ -4,7 +4,6 @@ import useSWR from 'swr'
 import { listDevices, readDirectory } from './api'
 
 const fetcher = async (key: string | string[]) => {
-  console.debug('useSNI', key)
   switch (true) {
     case key === 'devices':
       return await listDevices()

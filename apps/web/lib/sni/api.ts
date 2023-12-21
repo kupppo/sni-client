@@ -46,9 +46,9 @@ export const listDevices = async () => {
       return { ...device, capabilities, rawCapabilities }
     })
 
-    if (devices.length === 0) {
-      throw new Error('No devices found')
-    }
+    // if (devices.length === 0) {
+    //   throw new Error('No devices found')
+    // }
 
     return {
       connected: devices.length > 0,
@@ -56,8 +56,10 @@ export const listDevices = async () => {
       // TODO: Make this configurable and rememberable
       current: devices[0],
     }
-  } catch (error) {
-    return { connected: false, devices: [], current: null }
+  } catch (err: unknown) {
+    const error = err as Error
+    console.error('listDevices', error.message)
+    throw new Error('NoConnection')
   }
 }
 

@@ -77,6 +77,24 @@
   }
 }
 
+article p {
+  color: hsl(var(--accent-foreground));
+}
+
+article p a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  transition: color 0.15s ease-in-out, text-decoration-color 0.15s ease-in-out;
+  @apply font-semibold;
+}
+
+article p a:hover {
+  color: hsl(var(--connected));
+  text-decoration-color: transparent;
+}
+
 .list-dash {
   padding-left: 12px;
 }
