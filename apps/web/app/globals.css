@@ -59,6 +59,8 @@
  
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
+
+    --connected: 167, 72%, 60%;
  
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
@@ -73,4 +75,20 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.list-dash {
+  padding-left: 12px;
+}
+
+.list-dash li {
+  padding-left: 12px;
+}
+
+.list-dash li:before {
+  content: "-";
+  color: hsl(var(--muted-foreground));
+  position: absolute;
+  margin-left: -22px;
+  margin-top: -1px;
 }

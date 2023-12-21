@@ -8,11 +8,42 @@ let transport = new GrpcWebFetchTransport({
 const DevicesClient = new sniClient.DevicesClient(transport)
 const FSClient = new sniClient.DeviceFilesystemClient(transport)
 
+const CAPABILITIES = {
+  None: 0,
+  ReadMemory: 1,
+  WriteMemory: 2,
+  ExecuteASM: 3,
+  ResetSystem: 4,
+  PauseUnpauseEmulation: 5,
+  PauseToggleEmulation: 6,
+  ResetToMenu: 7,
+  FetchFields: 8,
+  ReadDirectory: 10,
+  MakeDirectory: 11,
+  RemoveFile: 12,
+  RenameFile: 13,
+  PutFile: 14,
+  GetFile: 15,
+  BootFile: 16,
+  NWACommand: 20,
+}
+
+const mapCapabilities = (input: number[]) =>
+  input.map((capability) => {
+    return Object.keys(CAPABILITIES).find(
+      (key) => CAPABILITIES[key as keyof typeof CAPABILITIES] === capability,
+    )
+  })
+
 export const listDevices = async () => {
   try {
     const req = sni.DevicesRequest.create()
     const devicesCall = await DevicesClient.listDevices(req)
-    const devices: any[] = devicesCall.response.devices
+    const devices: any[] = devicesCall.response.devices.map((device) => {
+      const rawCapabilities = device.capabilities
+      const capabilities = mapCapabilities(device.capabilities)
+      return { ...device, capabilities, rawCapabilities }
+    })
 
     if (devices.length === 0) {
       throw new Error('No devices found')
