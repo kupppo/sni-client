@@ -1,7 +1,14 @@
 'use client'
 
 import { useSNI } from '@/lib/sni'
-import { FileIcon, FolderIcon, FolderOpen, MinusSquare, PlusSquare } from 'lucide-react'
+import {
+  FileIcon,
+  FolderIcon,
+  FolderOpen,
+  MinusSquare,
+  PlusSquare,
+} from 'lucide-react'
+import SNIError from '@/components/sniError'
 import { useCallback, useState } from 'react'
 import { MouseEvent } from 'react'
 import { cn } from '@/lib/utils'
@@ -132,10 +139,16 @@ function FileTree({
 
 export default function FileTreeWrapper(): JSX.Element | null {
   const data = useSNI('devices', { refreshInterval: 50 })
+
+  if (data.error) {
+    return <SNIError error={data.error} />
+  }
+
   const connected = data?.connected
   if (!connected) {
     return null
   }
+
   return (
     <div className="w-full font-mono">
       <div className={cn('border-t border-zinc-800 px-4 py-4')} />
