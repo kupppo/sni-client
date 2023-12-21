@@ -138,7 +138,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
   }
   return (
     <div className="w-full font-mono">
-      <div className={cn('border-t border-zinc-50 px-4 py-4')} />
+      <div className={cn('border-t border-zinc-800 px-4 py-4')} />
       <FileTree uri={data.current.uri} path="/" />
     </div>
   )
