@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { ThemeProvider } from '@/components/ui/theme-provider'
+import { Toaster } from 'sonner'
 import { cn } from '../lib/utils'
 import Header from '@/components/header'
 
@@ -32,6 +33,7 @@ export default function RootLayout({
           <Header />
           <div className="container">{children}</div>
         </ThemeProvider>
+        <Toaster theme="system" position="bottom-right" />
       </body>
     </html>
   )

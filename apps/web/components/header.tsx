@@ -92,10 +92,6 @@ export default function SiteHeader() {
       href: '/files',
       label: 'Files',
     },
-    {
-      href: '/controls',
-      label: 'Controls',
-    }
   ]
   return (
     <header

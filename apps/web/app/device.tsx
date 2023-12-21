@@ -2,6 +2,9 @@
 
 import { useSNI } from '@/lib/sni'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { resetSystem, resetToMenu } from '@/lib/sni/api'
+import { toast } from 'sonner'
 import { PropsWithChildren } from 'react'
 
 const Label = (props: PropsWithChildren) => (
@@ -26,30 +29,92 @@ export default function DeviceView(): JSX.Element {
         <div className="-ml-2 mb-4">
           <Badge variant="connected">Connected</Badge>
         </div>
-        <div className="flex mb-2">
-          <Label>Name</Label>
-          <Value>{data.current.displayName}</Value>
-        </div>
-        <div className="flex mb-2">
-          <Label>Kind</Label>
-          <Value>{data.current.kind}</Value>
-        </div>
-        <div className="flex mb-2">
-          <Label>URI</Label>
-          <Value>{data.current.uri}</Value>
-        </div>
-        {data.current.capabilities.length > 0 && (
-          <div className="flex mb-2">
-            <Label>Capabilities</Label>
-            <ul className="list-none">
-              {data.current.capabilities.map((capability: string) => (
-                <li key={capability}>
-                  <Value>{capability}</Value>
-                </li>
-              ))}
-            </ul>
+        <div className="flex gap-12">
+          <div>
+            <div className="flex mb-2">
+              <Label>Name</Label>
+              <Value>{data.current.displayName}</Value>
+            </div>
+            <div className="flex mb-2">
+              <Label>Kind</Label>
+              <Value>{data.current.kind}</Value>
+            </div>
+            <div className="flex mb-2">
+              <Label>URI</Label>
+              <Value>{data.current.uri}</Value>
+            </div>
+            {data.current.capabilities.length > 0 && (
+              <div className="flex mb-2">
+                <Label>Capabilities</Label>
+                <ul className="list-none">
+                  {data.current.capabilities.map((capability: string) => (
+                    <li key={capability}>
+                      <Value>{capability}</Value>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-        )}
+          <div>
+            {data.current.capabilities.includes('ResetSystem') && (
+              <div className="mb-4">
+                <Button
+                  variant="default"
+                  onClick={async (evt) => {
+                    try {
+                      evt.preventDefault()
+                      await resetSystem(data.current.uri)
+                    } catch (err) {
+                      const error = err as Error
+                      const notConfigured = error.message.includes(
+                        'device not configured',
+                      )
+                      if (notConfigured) {
+                        toast.error('Device is not configured', {
+                          description: 'Please try again shortly',
+                        })
+                      } else {
+                        console.error(error)
+                        toast.error('Failed to reset system')
+                      }
+                    }
+                  }}
+                >
+                  Reset System
+                </Button>
+              </div>
+            )}
+            {data.current.capabilities.includes('ResetToMenu') && (
+              <div>
+                <Button
+                  variant="outline"
+                  onClick={async (evt) => {
+                    try {
+                      evt.preventDefault()
+                      await resetToMenu(data.current.uri)
+                    } catch (err) {
+                      const error = err as Error
+                      const notConfigured = error.message.includes(
+                        'device not configured',
+                      )
+                      if (notConfigured) {
+                        toast.error('Device is not configured', {
+                          description: 'Please try again shortly',
+                        })
+                      } else {
+                        console.error(error)
+                        toast.error('Failed to reset to menu')
+                      }
+                    }
+                  }}
+                >
+                  Reset to Menu
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     )
   }

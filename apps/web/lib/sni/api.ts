@@ -6,6 +6,7 @@ let transport = new GrpcWebFetchTransport({
 })
 
 const DevicesClient = new sniClient.DevicesClient(transport)
+const DeviceControlClient = new sniClient.DeviceControlClient(transport)
 const FSClient = new sniClient.DeviceFilesystemClient(transport)
 
 const CAPABILITIES = {
@@ -93,4 +94,16 @@ export const readDirectory = async (uri: string, path: string) => {
   const folders = getFolders(rawFolders, path)
   const files = getFiles(rawFiles, path)
   return folders.concat(files)
+}
+
+export const resetSystem = async (uri: string) => {
+  const req = sni.ResetSystemRequest.create({ uri })
+  const call = await DeviceControlClient.resetSystem(req)
+  return call.response
+}
+
+export const resetToMenu = async (uri: string) => {
+  const req = sni.ResetToMenuRequest.create({ uri })
+  const call = await DeviceControlClient.resetToMenu(req)
+  return call.response
 }
