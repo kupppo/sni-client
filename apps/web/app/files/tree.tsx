@@ -11,7 +11,9 @@ import {
 import SNIError from '@/components/sniError'
 import { useCallback, useState } from 'react'
 import { MouseEvent } from 'react'
+import { useDropzone } from 'react-dropzone'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const Indents = ({ depth }: { depth: number }) => (
   <div className="flex ml-7">
@@ -101,6 +103,14 @@ function FileTree({
 }): JSX.Element {
   const { data, isLoading, error } = useSNI(['readDirectory', path, uri])
 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    noClick: true,
+    noDragEventsBubbling: true,
+    onDrop: (acceptedFiles) => {
+      toast(`Dropped ${acceptedFiles[0]?.name} into ${path}`)
+    },
+  })
+
   if (error) {
     console.error(error)
   }
@@ -126,14 +136,17 @@ function FileTree({
   const files = data.filter((entry: any) => entry.type === 1)
 
   return (
-    <ul className={cn('list-none')}>
-      {folders.map((folder: any) => (
-        <Folder key={folder.path} {...folder} depth={depth} uri={uri} />
-      ))}
-      {files.map((file: any) => (
-        <File key={file.path} depth={depth} {...file} />
-      ))}
-    </ul>
+    <div {...getRootProps()} className={cn(isDragActive && 'bg-zinc-400')}>
+      <input {...getInputProps()} />
+      <ul className={cn('list-none')}>
+        {folders.map((folder: any) => (
+          <Folder key={folder.path} {...folder} depth={depth} uri={uri} />
+        ))}
+        {files.map((file: any) => (
+          <File key={file.path} depth={depth} {...file} />
+        ))}
+      </ul>
+    </div>
   )
 }
 
@@ -147,6 +160,16 @@ export default function FileTreeWrapper(): JSX.Element | null {
   const connected = data?.connected
   if (!connected) {
     return null
+  }
+
+  const requiredCapabilities = ['ReadDirectory', 'PutFile']
+  const hasRequiredCapabilities = requiredCapabilities.every(
+    (capability: string) => data.current.capabilities.includes(capability),
+  )
+
+  if (!hasRequiredCapabilities) {
+    const err = new Error('Missing Filesystem Capabilities')
+    return <SNIError error={err} />
   }
 
   return (
