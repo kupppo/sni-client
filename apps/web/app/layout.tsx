@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/ui/theme-provider'
 import { Toaster } from 'sonner'
 import { cn } from '../lib/utils'
 import Header from '@/components/header'
+import { Analytics } from '@vercel/analytics/react'
 
 export const metadata: Metadata = {
   title: 'SNI Web Client',
@@ -34,6 +35,7 @@ export default function RootLayout({
           <div className="container">{children}</div>
         </ThemeProvider>
         <Toaster theme="system" position="bottom-right" />
+        <Analytics />
       </body>
     </html>
   )
