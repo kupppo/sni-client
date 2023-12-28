@@ -101,10 +101,12 @@ export default function SiteHeader() {
     >
       <div className={cn('container flex items-center justify-between py-4')}>
         <div className={cn('flex items-baseline')}>
-          <a href="/" className={cn('text-md font-normal mr-12')}>
+          <Link href="/" className={cn('text-md font-normal mr-12')}>
             SNI Web Client
-          </a>
-          <nav className={cn('flex items-center text-sm font-medium space-x-4')}>
+          </Link>
+          <nav
+            className={cn('flex items-center text-sm font-medium space-x-4')}
+          >
             {LINKS.map(({ href, label }) => (
               <Link
                 key={href}
