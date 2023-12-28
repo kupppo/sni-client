@@ -111,3 +111,12 @@ article p a:hover {
   margin-left: -22px;
   margin-top: -1px;
 }
+
+.visually-hidden {
+  width: 0;
+  height: 0;
+  visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+}

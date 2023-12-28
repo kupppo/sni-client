@@ -109,3 +109,17 @@ export const resetToMenu = async (uri: string) => {
   const call = await DeviceControlClient.resetToMenu(req)
   return call.response
 }
+
+export const putFile = async (
+  uri: string,
+  path: string,
+  fileContents: Uint8Array,
+) => {
+  if (path.length === 0) {
+    throw new Error('Invalid path')
+  }
+
+  const req = sni.PutFileRequest.create({ uri, path, data: fileContents })
+  await FSClient.putFile(req)
+  return path
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useSNI } from '@/lib/sni'
+import { putFile } from '@/lib/sni/api'
 import {
   FileIcon,
   FolderIcon,
@@ -9,11 +10,13 @@ import {
   PlusSquare,
 } from 'lucide-react'
 import SNIError from '@/components/sniError'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { MouseEvent } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { useSWRConfig } from 'swr'
 
 const Indents = ({ depth }: { depth: number }) => (
   <div className="flex ml-7">
@@ -150,8 +153,50 @@ function FileTree({
   )
 }
 
+async function readFile(file: File): Promise<Uint8Array> {
+  let reader = new FileReader()
+  return new Promise((resolve, reject) => {
+    reader.onload = async function () {
+      try {
+        const result = reader.result as ArrayBuffer
+        const contents = new Uint8Array(result)
+        resolve(contents)
+      } catch (e) {
+        const err = e as Error
+        console.error(err.message)
+        toast.error('Failed to load file')
+        reject(err)
+      }
+    }
+    reader.onerror = function () {
+      toast.error('Failed to load file')
+    }
+    reader.readAsArrayBuffer(file)
+  })
+}
+
 export default function FileTreeWrapper(): JSX.Element | null {
+  const { mutate } = useSWRConfig()
   const data = useSNI('devices', { refreshInterval: 50 })
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = useCallback(
+    async (evt: any) => {
+      const file = evt.target.files[0]
+      const toastId = toast.loading(`Adding ${file.name}`)
+      const fileContents = await readFile(file)
+      await putFile(data.current.uri, file.name, fileContents)
+
+      // revalidate directory to show new file
+      mutate(['readDirectory', '/', data.current.uri], undefined, {
+        revalidate: true,
+      })
+      toast.success(`Added ${file.name}`, {
+        id: toastId,
+      })
+    },
+    [data.current],
+  )
 
   if (data.error) {
     return <SNIError error={data.error} />
@@ -176,6 +221,25 @@ export default function FileTreeWrapper(): JSX.Element | null {
     <div className="w-full font-mono">
       <div className={cn('border-t border-zinc-800 px-4 py-4')} />
       <FileTree uri={data.current.uri} path="/" />
+      <div className={cn('border-t border-zinc-900 mt-8 py-4 font-sans')}>
+        <div>
+          <Button
+            variant="default"
+            onClick={(evt) => {
+              evt.preventDefault()
+              inputRef.current?.click()
+            }}
+          >
+            Add File
+          </Button>
+          <input
+            ref={inputRef}
+            type="file"
+            className="visually-hidden"
+            onChange={handleFileChange}
+          />
+        </div>
+      </div>
     </div>
   )
 }
