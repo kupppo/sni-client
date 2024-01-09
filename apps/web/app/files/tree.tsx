@@ -1,7 +1,7 @@
 'use client'
 
 import { useSNI } from '@/lib/sni'
-import { bootFile, deleteFile, putFile, resetSystem, resetToMenu } from '@/lib/sni/api'
+import { bootFile, deleteFile, getFields, putFile, resetSystem, resetToMenu } from '@/lib/sni/api'
 import {
   FileIcon,
   FolderIcon,
@@ -222,6 +222,10 @@ async function readFile(file: File): Promise<Uint8Array> {
 export default function FileTreeWrapper(): JSX.Element | null {
   const { mutate } = useSWRConfig()
   const data = useSNI('devices', { refreshInterval: 50 })
+  const currentScreen = useSNI(['currentScreen', data?.current?.uri], {
+    refreshInterval: 200,
+  })
+
   const inputRef = useRef<HTMLInputElement>(null)
   const [currentFile, setCurrentFile] = useState<string | null>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -311,24 +315,28 @@ export default function FileTreeWrapper(): JSX.Element | null {
           >
             Add File
           </Button>
-          <Button
-            variant="outline"
-            onClick={(evt) => {
-              evt.preventDefault()
-              resetSystem(data.current.uri)
-            }}
-          >
-            Reset Game
-          </Button>
-          <Button
-            variant="outline"
-            onClick={(evt) => {
-              evt.preventDefault()
-              resetToMenu(data.current.uri)
-            }}
-          >
-            Reset to Menu
-          </Button>
+          {currentScreen?.data === 'game' && (
+            <>
+              <Button
+                variant="outline"
+                onClick={(evt) => {
+                  evt.preventDefault()
+                  resetSystem(data.current.uri)
+                }}
+              >
+                Reset Game
+              </Button>
+              <Button
+                variant="outline"
+                onClick={(evt) => {
+                  evt.preventDefault()
+                  resetToMenu(data.current.uri)
+                }}
+              >
+                Reset to Menu
+              </Button>
+            </>
+          )}
           <input
             ref={inputRef}
             type="file"

@@ -8,6 +8,7 @@ let transport = new GrpcWebFetchTransport({
 const DevicesClient = new sniClient.DevicesClient(transport)
 const DeviceControlClient = new sniClient.DeviceControlClient(transport)
 const FSClient = new sniClient.DeviceFilesystemClient(transport)
+const DeviceInfoClient = new sniClient.DeviceInfoClient(transport)
 
 const CAPABILITIES = {
   None: 0,
@@ -35,6 +36,27 @@ const mapCapabilities = (input: number[]) =>
       (key) => CAPABILITIES[key as keyof typeof CAPABILITIES] === capability,
     )
   })
+
+const fetchFields = () => {
+  const clone = { ...sni.Field }
+  // remove all keys that are numbers
+  Object.keys(clone).forEach((key: string | number) => {
+    if (!isNaN(Number(key))) {
+      delete clone[key as keyof typeof clone]
+    }
+  })
+  return clone
+}
+
+const FIELDS = fetchFields()
+
+const mapFields = (input: string[]) => {
+  return input.map((field) => {
+    return Object.keys(FIELDS).find(
+      (key) => FIELDS[key as keyof typeof FIELDS] === field,
+    )
+  })
+}
 
 const validatePath = (path: string) => {
   try {
@@ -149,4 +171,32 @@ export const deleteFile = async (uri: string, path: string) => {
   const req = sni.RemoveFileRequest.create({ uri, path })
   await FSClient.removeFile(req)
   return path
+}
+
+export const getFields = async (uri: string, inputFields: string[]) => {
+  const fields = inputFields.filter(
+    (field) => FIELDS[field as keyof typeof FIELDS],
+  )
+  if (fields.length === 0) {
+    throw new Error('No valid fields provided')
+  }
+  const req = sni.FieldsRequest.create({ uri, fields: [sni.Field.RomFileName] })
+  const call = await DeviceInfoClient.fetchFields(req)
+  // const call = await DeviceControlClient.state(req)
+  // const call = await DeviceControlClient.state(req)
+  return call.response
+}
+
+export const currentScreen = async (uri: string) => {
+  try {
+    const req = await getFields(uri, ['RomFileName'])
+    if (req.values[0] !== '/sd2snes/m3nu.bin') {
+      return 'game'
+    }
+    return 'menu'
+  } catch (err: unknown) {
+    const error = err as Error
+    console.error('currentScreen', error.message)
+    return 'menu'
+  }
 }
