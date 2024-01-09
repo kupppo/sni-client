@@ -1,7 +1,7 @@
 'use client'
 
 import { useSNI } from '@/lib/sni'
-import { putFile } from '@/lib/sni/api'
+import { bootFile, deleteFile, putFile } from '@/lib/sni/api'
 import {
   FileIcon,
   FolderIcon,
@@ -228,8 +228,6 @@ export default function FileTreeWrapper(): JSX.Element | null {
 
   useEffect(() => {
     const onKeydown = (evt: KeyboardEvent) => {
-      evt.preventDefault()
-      evt.stopPropagation()
       if (evt.key === 'Escape') {
         setCurrentFile(null)
       }
@@ -323,7 +321,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
       </div>
       <div
         className={cn(
-          'fixed top-0 right-0 z-50 h-screen p-4 overflow-y-auto transition-transform translate-x-full w-96 bg-zinc-950 border-l border-zinc-900',
+          'fixed top-0 right-0 z-50 h-screen p-4 overflow-y-auto transition-transform translate-x-full w-96 bg-zinc-950 border-l border-zinc-900 flex flex-col justify-between',
           currentFile && 'translate-x-0',
         )}
         tabIndex={-1}
@@ -344,6 +342,38 @@ export default function FileTreeWrapper(): JSX.Element | null {
               </Button>
             </div>
             <h3 className="pt-10">{currentFile}</h3>
+            <div className="w-full font-sans flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={(evt: any) => {
+                  evt.preventDefault()
+                  bootFile(data.current.uri, currentFile)
+                }}
+              >
+                Boot
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={async (evt: any) => {
+                  evt.preventDefault()
+                  // TODO: alert to remove file
+                  const toastId = toast.loading(`Deleting file`)
+                  await deleteFile(data.current.uri, currentFile)
+                  toast.success(`Deleted file`, {
+                    id: toastId,
+                  })
+                  setCurrentFile(null)
+                  // TODO: revalidate directory of the removed file
+                  mutate(['readDirectory', '/', data.current.uri], undefined, {
+                    revalidate: true,
+                  })
+                }}
+              >
+                Delete
+              </Button>
+            </div>
           </>
         )}
       </div>
