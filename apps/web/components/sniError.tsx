@@ -48,6 +48,16 @@ export default function SNIError({ error }: { error: Error }): JSX.Element {
           </a>{' '}
           of SNI to make sure you are up to date.
         </p>
+        <h2 className="text-xl font-bold mb-1">Check your ad blocker</h2>
+        <p className="mb-12">
+          Ad blockers might try and block this website from connecting to SNI
+          since it is running locally on your computer. Please configure your ad
+          blocker to allow this site to access to{' '}
+          <code className="text-sm text-primary/70 underline underline-offset-4">
+            localhost:8190
+          </code>{' '}
+          or disable the ad blocker for this website.
+        </p>
       </article>
     )
   } else {
