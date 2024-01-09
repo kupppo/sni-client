@@ -1,7 +1,7 @@
 'use client'
 
 import { useSNI } from '@/lib/sni'
-import { bootFile, deleteFile, putFile } from '@/lib/sni/api'
+import { bootFile, deleteFile, putFile, resetSystem, resetToMenu } from '@/lib/sni/api'
 import {
   FileIcon,
   FolderIcon,
@@ -301,7 +301,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
         path="/"
       />
       <div className={cn('border-t border-zinc-900 mt-8 py-4 font-sans')}>
-        <div>
+        <div className="flex gap-3">
           <Button
             variant="default"
             onClick={(evt) => {
@@ -310,6 +310,24 @@ export default function FileTreeWrapper(): JSX.Element | null {
             }}
           >
             Add File
+          </Button>
+          <Button
+            variant="outline"
+            onClick={(evt) => {
+              evt.preventDefault()
+              resetSystem(data.current.uri)
+            }}
+          >
+            Reset Game
+          </Button>
+          <Button
+            variant="outline"
+            onClick={(evt) => {
+              evt.preventDefault()
+              resetToMenu(data.current.uri)
+            }}
+          >
+            Reset to Menu
           </Button>
           <input
             ref={inputRef}
