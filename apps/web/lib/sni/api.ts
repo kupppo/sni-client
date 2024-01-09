@@ -36,6 +36,19 @@ const mapCapabilities = (input: number[]) =>
     )
   })
 
+const validatePath = (path: string) => {
+  try {
+    if (path.length === 0) {
+      throw new Error('No path provided')
+    }
+    return true
+  } catch (err: unknown) {
+    const error = err as Error
+    console.error(`Could not validate path '${path}':`, error.message)
+    throw error
+  }
+}
+
 export const listDevices = async () => {
   try {
     const req = sni.DevicesRequest.create()
@@ -115,11 +128,25 @@ export const putFile = async (
   path: string,
   fileContents: Uint8Array,
 ) => {
-  if (path.length === 0) {
-    throw new Error('Invalid path')
-  }
+  validatePath(path)
 
   const req = sni.PutFileRequest.create({ uri, path, data: fileContents })
   await FSClient.putFile(req)
+  return path
+}
+
+export const bootFile = async (uri: string, path: string) => {
+  validatePath(path)
+
+  const req = sni.BootFileRequest.create({ uri, path })
+  await FSClient.bootFile(req)
+  return path
+}
+
+export const deleteFile = async (uri: string, path: string) => {
+  validatePath(path)
+
+  const req = sni.RemoveFileRequest.create({ uri, path })
+  await FSClient.removeFile(req)
   return path
 }

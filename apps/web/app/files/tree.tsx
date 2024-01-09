@@ -8,9 +8,10 @@ import {
   FolderOpen,
   MinusSquare,
   PlusSquare,
+  X as CloseIcon,
 } from 'lucide-react'
 import SNIError from '@/components/sniError'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { MouseEvent } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { cn } from '@/lib/utils'
@@ -35,16 +36,36 @@ const Indents = ({ depth }: { depth: number }) => (
   </div>
 )
 
-function File({ name, depth }: { depth: number; name: string }) {
+function File({
+  name,
+  depth,
+  path,
+  setCurrentFile,
+}: {
+  depth: number
+  name: string
+  path: string
+  // eslint-disable-next-line no-unused-vars
+  setCurrentFile: (_path: string) => void
+}) {
+  const handleClick = useCallback(
+    (evt: MouseEvent<HTMLButtonElement>) => {
+      evt.preventDefault()
+      setCurrentFile(path)
+    },
+    [setCurrentFile],
+  )
   // For depth, insert indents
   return (
     <li className={'whitespace-nowrap relative'}>
       <div className={cn('flex items-center')}>
         {depth > 0 ? <Indents depth={depth} /> : <div className="w-8" />}
-        <div className={cn('ml-4', 'pl-0.5', 'mr-2')}>
-          <FileIcon size={18} strokeWidth={1} />
-        </div>
-        <span className={cn('text-md')}>{name}</span>
+        <Button variant="plain" size="plain" onClick={handleClick}>
+          <div className={cn('ml-4', 'pl-0.5', 'mr-2')}>
+            <FileIcon size={18} strokeWidth={1} />
+          </div>
+          <span className={cn('text-md pr-4')}>{name}</span>
+        </Button>
       </div>
     </li>
   )
@@ -54,11 +75,13 @@ function Folder({
   name,
   depth = 0,
   path,
+  setCurrentFile,
   uri,
 }: {
   name: string
   depth: number
   path: string
+  setCurrentFile?: any
   uri: string
 }) {
   const [open, setOpen] = useState(false)
@@ -90,7 +113,14 @@ function Folder({
         </div>
         <span className={cn('text-md')}>{name}</span>
       </button>
-      {open && <FileTree path={path} uri={uri} depth={depth + 1} />}
+      {open && (
+        <FileTree
+          path={path}
+          uri={uri}
+          setCurrentFile={setCurrentFile}
+          depth={depth + 1}
+        />
+      )}
     </li>
   )
 }
@@ -98,10 +128,12 @@ function Folder({
 function FileTree({
   uri,
   path = '/',
+  setCurrentFile,
   depth = 0,
 }: {
   uri: string
   path: string
+  setCurrentFile?: any
   depth?: number
 }): JSX.Element {
   const { data, isLoading, error } = useSNI(['readDirectory', path, uri])
@@ -143,10 +175,22 @@ function FileTree({
       <input {...getInputProps()} />
       <ul className={cn('list-none')}>
         {folders.map((folder: any) => (
-          <Folder key={folder.path} {...folder} depth={depth} uri={uri} />
+          <Folder
+            key={folder.path}
+            {...folder}
+            depth={depth}
+            uri={uri}
+            setCurrentFile={setCurrentFile}
+          />
         ))}
         {files.map((file: any) => (
-          <File key={file.path} depth={depth} {...file} />
+          <File
+            key={file.path}
+            depth={depth}
+            setCurrentFile={setCurrentFile}
+            path={file.path}
+            {...file}
+          />
         ))}
       </ul>
     </div>
@@ -179,6 +223,39 @@ export default function FileTreeWrapper(): JSX.Element | null {
   const { mutate } = useSWRConfig()
   const data = useSNI('devices', { refreshInterval: 50 })
   const inputRef = useRef<HTMLInputElement>(null)
+  const [currentFile, setCurrentFile] = useState<string | null>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onKeydown = (evt: KeyboardEvent) => {
+      evt.preventDefault()
+      evt.stopPropagation()
+      if (evt.key === 'Escape') {
+        setCurrentFile(null)
+      }
+    }
+    const onClick = (evt: any) => {
+      if (drawerRef.current?.contains(evt.target as Node)) {
+        return
+      }
+      setCurrentFile(null)
+    }
+    if (currentFile) {
+      document.body.classList.add('overflow-hidden')
+      document.addEventListener('keydown', onKeydown)
+      document.addEventListener('click', onClick)
+    } else {
+      document.body.classList.remove('overflow-hidden')
+      document.removeEventListener('keydown', onKeydown)
+      document.removeEventListener('click', onClick)
+    }
+
+    return () => {
+      document.body.classList.remove('overflow-hidden')
+      document.removeEventListener('keydown', onKeydown)
+      document.removeEventListener('click', onClick)
+    }
+  }, [currentFile, drawerRef])
 
   const handleFileChange = useCallback(
     async (evt: any) => {
@@ -220,7 +297,11 @@ export default function FileTreeWrapper(): JSX.Element | null {
   return (
     <div className="w-full font-mono">
       <div className={cn('border-t border-zinc-800 px-4 py-4')} />
-      <FileTree uri={data.current.uri} path="/" />
+      <FileTree
+        uri={data.current.uri}
+        setCurrentFile={setCurrentFile}
+        path="/"
+      />
       <div className={cn('border-t border-zinc-900 mt-8 py-4 font-sans')}>
         <div>
           <Button
@@ -239,6 +320,32 @@ export default function FileTreeWrapper(): JSX.Element | null {
             onChange={handleFileChange}
           />
         </div>
+      </div>
+      <div
+        className={cn(
+          'fixed top-0 right-0 z-50 h-screen p-4 overflow-y-auto transition-transform translate-x-full w-96 bg-zinc-950 border-l border-zinc-900',
+          currentFile && 'translate-x-0',
+        )}
+        tabIndex={-1}
+        ref={drawerRef}
+      >
+        {currentFile && (
+          <>
+            <div className="fixed top-1 right-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(evt: MouseEvent<HTMLButtonElement>) => {
+                  evt.preventDefault()
+                  setCurrentFile(null)
+                }}
+              >
+                <CloseIcon />
+              </Button>
+            </div>
+            <h3 className="pt-10">{currentFile}</h3>
+          </>
+        )}
       </div>
     </div>
   )
