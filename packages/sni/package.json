@@ -7,7 +7,7 @@
     "access": "public"
   },
   "scripts": {
-    "compile": "protoc --ts_out ./lib --proto_path protos protos/*.proto"
+    "proto": "protoc --ts_out ./lib/proto --proto_path protos protos/*.proto"
   },
   "dependencies": {
     "@protobuf-ts/grpcweb-transport": "^2.9.3"

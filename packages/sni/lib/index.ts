@@ -1,2 +1,2 @@
-export * as client from './sni.client'
-export * as sni from './sni'
+export * as client from './proto/sni.client'
+export * as SNI from './proto/sni'
