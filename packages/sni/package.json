@@ -1,0 +1,19 @@
+{
+  "name": "@repo/sni",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "compile": "protoc --ts_out ./lib --proto_path protos protos/*.proto"
+  },
+  "dependencies": {
+    "@protobuf-ts/grpcweb-transport": "^2.9.3"
+  },
+  "devDependencies": {
+    "@protobuf-ts/plugin": "^2.9.3",
+    "@protobuf-ts/protoc": "^2.9.3"
+  }
+}

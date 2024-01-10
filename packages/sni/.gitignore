@@ -1,0 +1,2 @@
+lib/proto/*
+!lib/proto/.keep
