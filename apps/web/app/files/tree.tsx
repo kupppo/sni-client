@@ -1,7 +1,13 @@
 'use client'
 
 import { useSNI } from '@/lib/sni'
-import { bootFile, deleteFile, getFields, putFile, resetSystem, resetToMenu } from '@/lib/sni/api'
+import {
+  bootFile,
+  deleteFile,
+  putFile,
+  resetSystem,
+  resetToMenu,
+} from '@/lib/sni/api'
 import {
   FileIcon,
   FolderIcon,
@@ -219,16 +225,19 @@ async function readFile(file: File): Promise<Uint8Array> {
   })
 }
 
-export default function FileTreeWrapper(): JSX.Element | null {
-  const { mutate } = useSWRConfig()
-  const data = useSNI('devices', { refreshInterval: 50 })
-  const currentScreen = useSNI(['currentScreen', data?.current?.uri], {
-    refreshInterval: 200,
-  })
-
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [currentFile, setCurrentFile] = useState<string | null>(null)
+export function Drawer({
+  currentFile,
+  setCurrentFile,
+  uri,
+}: {
+  currentFile: string | null
+  // eslint-disable-next-line no-unused-vars
+  setCurrentFile: (_path: string | null) => void
+  uri: string
+}) {
   const drawerRef = useRef<HTMLDivElement>(null)
+  const { mutate } = useSWRConfig()
+  const isOpen = !!currentFile
 
   useEffect(() => {
     const onKeydown = (evt: KeyboardEvent) => {
@@ -258,6 +267,78 @@ export default function FileTreeWrapper(): JSX.Element | null {
       document.removeEventListener('click', onClick)
     }
   }, [currentFile, drawerRef])
+
+  return (
+    <div
+      className={cn(
+        'fixed top-0 right-0 z-50 h-screen p-4 overflow-y-auto transition-transform translate-x-full w-96 bg-zinc-950 border-l border-zinc-900 flex flex-col justify-between',
+        currentFile && 'translate-x-0',
+      )}
+      tabIndex={-1}
+      ref={drawerRef}
+    >
+      {isOpen && (
+        <>
+          <div className="fixed top-1 right-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(evt: MouseEvent<HTMLButtonElement>) => {
+                evt.preventDefault()
+                setCurrentFile(null)
+              }}
+            >
+              <CloseIcon />
+            </Button>
+          </div>
+          <h3 className="pt-10">{currentFile}</h3>
+          <div className="w-full font-sans flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={(evt: any) => {
+                evt.preventDefault()
+                bootFile(uri, currentFile)
+              }}
+            >
+              Boot
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={async (evt: any) => {
+                evt.preventDefault()
+                // TODO: alert to remove file
+                const toastId = toast.loading(`Deleting file`)
+                await deleteFile(uri, currentFile)
+                toast.success(`Deleted file`, {
+                  id: toastId,
+                })
+                setCurrentFile(null)
+                // TODO: revalidate directory of the removed file
+                mutate(['readDirectory', '/', uri], undefined, {
+                  revalidate: true,
+                })
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+export default function FileTreeWrapper(): JSX.Element | null {
+  const { mutate } = useSWRConfig()
+  const data = useSNI('devices', { refreshInterval: 50 })
+  const currentScreen = useSNI(['currentScreen', data?.current?.uri], {
+    refreshInterval: 200,
+  })
+
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [currentFile, setCurrentFile] = useState<string | null>(null)
 
   const handleFileChange = useCallback(
     async (evt: any) => {
@@ -345,64 +426,11 @@ export default function FileTreeWrapper(): JSX.Element | null {
           />
         </div>
       </div>
-      <div
-        className={cn(
-          'fixed top-0 right-0 z-50 h-screen p-4 overflow-y-auto transition-transform translate-x-full w-96 bg-zinc-950 border-l border-zinc-900 flex flex-col justify-between',
-          currentFile && 'translate-x-0',
-        )}
-        tabIndex={-1}
-        ref={drawerRef}
-      >
-        {currentFile && (
-          <>
-            <div className="fixed top-1 right-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(evt: MouseEvent<HTMLButtonElement>) => {
-                  evt.preventDefault()
-                  setCurrentFile(null)
-                }}
-              >
-                <CloseIcon />
-              </Button>
-            </div>
-            <h3 className="pt-10">{currentFile}</h3>
-            <div className="w-full font-sans flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={(evt: any) => {
-                  evt.preventDefault()
-                  bootFile(data.current.uri, currentFile)
-                }}
-              >
-                Boot
-              </Button>
-              <Button
-                variant="destructive"
-                className="flex-1"
-                onClick={async (evt: any) => {
-                  evt.preventDefault()
-                  // TODO: alert to remove file
-                  const toastId = toast.loading(`Deleting file`)
-                  await deleteFile(data.current.uri, currentFile)
-                  toast.success(`Deleted file`, {
-                    id: toastId,
-                  })
-                  setCurrentFile(null)
-                  // TODO: revalidate directory of the removed file
-                  mutate(['readDirectory', '/', data.current.uri], undefined, {
-                    revalidate: true,
-                  })
-                }}
-              >
-                Delete
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
+      <Drawer
+        uri={data.current.uri}
+        currentFile={currentFile}
+        setCurrentFile={setCurrentFile}
+      />
     </div>
   )
 }
