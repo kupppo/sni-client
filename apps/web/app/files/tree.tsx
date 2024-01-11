@@ -235,6 +235,7 @@ export function Drawer({
   setCurrentFile: (_path: string | null) => void
   uri: string
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)
   const { mutate } = useSWRConfig()
   const isOpen = !!currentFile
@@ -292,37 +293,51 @@ export function Drawer({
             </Button>
           </div>
           <h3 className="pt-10">{currentFile}</h3>
-          <div className="w-full font-sans flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={(evt: any) => {
-                evt.preventDefault()
-                bootFile(uri, currentFile)
-              }}
+          <div className="w-full font-sans">
+            <div
+              className={cn(
+                'text-sm text-destructive pb-4 text-center',
+                !confirmDelete && 'hidden',
+              )}
             >
-              Boot
-            </Button>
-            <Button
-              variant="destructive"
-              className="flex-1"
-              onClick={async (evt: any) => {
-                evt.preventDefault()
-                // TODO: alert to remove file
-                const toastId = toast.loading(`Deleting file`)
-                await deleteFile(uri, currentFile)
-                toast.success(`Deleted file`, {
-                  id: toastId,
-                })
-                setCurrentFile(null)
-                // TODO: revalidate directory of the removed file
-                mutate(['readDirectory', '/', uri], undefined, {
-                  revalidate: true,
-                })
-              }}
-            >
-              Delete
-            </Button>
+              Are you sure you want to delete this file?
+            </div>
+            <div className="w-full flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={(evt: any) => {
+                  evt.preventDefault()
+                  bootFile(uri, currentFile)
+                }}
+              >
+                Boot file
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={async (evt: any) => {
+                  evt.preventDefault()
+                  if (confirmDelete) {
+                    const toastId = toast.loading(`Deleting file`)
+                    await deleteFile(uri, currentFile)
+                    toast.success(`Deleted file`, {
+                      id: toastId,
+                      duration: 3000,
+                    })
+                    setCurrentFile(null)
+                    // revalidate directory of the removed file
+                    mutate(['readDirectory', '/', uri])
+                    setConfirmDelete(false)
+                  } else {
+                    console.log('are you sure you want to delete?')
+                    setConfirmDelete(true)
+                  }
+                }}
+              >
+                {confirmDelete ? 'Confirm delete' : 'Delete file'}
+              </Button>
+            </div>
           </div>
         </>
       )}
@@ -348,9 +363,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
       await putFile(data.current.uri, file.name, fileContents)
 
       // revalidate directory to show new file
-      mutate(['readDirectory', '/', data.current.uri], undefined, {
-        revalidate: true,
-      })
+      mutate(['readDirectory', '/', data.current.uri])
       toast.success(`Added ${file.name}`, {
         id: toastId,
       })
