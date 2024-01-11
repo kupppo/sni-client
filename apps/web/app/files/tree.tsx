@@ -269,6 +269,12 @@ export function Drawer({
     }
   }, [currentFile, drawerRef])
 
+  // Reset confirm delete state when drawer is closed
+  //   or the current file changes
+  useEffect(() => {
+    setConfirmDelete(false)
+  }, [currentFile, setConfirmDelete])
+
   return (
     <div
       className={cn(
@@ -330,7 +336,6 @@ export function Drawer({
                     mutate(['readDirectory', '/', uri])
                     setConfirmDelete(false)
                   } else {
-                    console.log('are you sure you want to delete?')
                     setConfirmDelete(true)
                   }
                 }}
