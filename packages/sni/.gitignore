@@ -1,2 +1,2 @@
-lib/proto/*
-!lib/proto/.keep
+src/lib/proto/*
+!src/lib/proto/.keep
