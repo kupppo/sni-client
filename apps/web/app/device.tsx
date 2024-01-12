@@ -4,9 +4,11 @@ import { useSNI } from '@/lib/sni'
 import SNIError from '@/components/sniError'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { resetSystem, resetToMenu } from '@/lib/sni/api'
+import { SNI } from '@/lib/sni'
 import { toast } from 'sonner'
 import { PropsWithChildren } from 'react'
+
+const { resetSystem, resetToMenu } = SNI
 
 const Label = (props: PropsWithChildren) => (
   <span className="font-bold block w-32">{props.children}</span>
