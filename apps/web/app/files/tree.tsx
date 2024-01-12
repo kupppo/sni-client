@@ -1,13 +1,6 @@
 'use client'
 
-import { useSNI } from '@/lib/sni'
-import {
-  bootFile,
-  deleteFile,
-  putFile,
-  resetSystem,
-  resetToMenu,
-} from '@/lib/sni/api'
+import { SNI, useSNI } from '@/lib/sni'
 import {
   FileIcon,
   FolderIcon,
@@ -24,6 +17,8 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useSWRConfig } from 'swr'
+
+const { bootFile, deleteFile, putFile, resetSystem, resetToMenu } = SNI
 
 const Indents = ({ depth }: { depth: number }) => (
   <div className="flex ml-7">
@@ -159,6 +154,8 @@ function FileTree({
   if (isLoading) {
     return <div />
   }
+
+  console.log('data', data)
 
   if (data.length === 0) {
     return (
