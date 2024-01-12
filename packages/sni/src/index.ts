@@ -42,6 +42,30 @@ const mapCapabilities = (input: number[]) =>
     )
   })
 
+  const getFolders = (input: any[], path: string) => {
+    const ignoreFolders = ['System Volume Information']
+    const folders = input
+      .filter(
+        (entry: any) =>
+          !entry.name.startsWith('.') && !ignoreFolders.includes(entry.name),
+      )
+      .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+    return folders.map((entry) => ({
+      ...entry,
+      path: [path, entry.name].join('/').replace('//', '/'),
+    }))
+  }
+  
+  const getFiles = (input: any[], path: string) => {
+    const files = input
+      .filter((entry: any) => !entry.name.startsWith('.'))
+      .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+    return files.map((entry) => ({
+      ...entry,
+      path: [path, entry.name].join('/').replace('//', '/'),
+    }))
+  }
+
 class SNIClient {
   transport: GrpcWebFetchTransport
   clients: any
@@ -73,6 +97,39 @@ class SNIClient {
       console.debug('SNI.listDevices error', error)
       throw new Error('No Connection')
     }
+  }
+
+  async putFile (uri: string, path: string, fileContents: Uint8Array) {
+    if (path.length === 0) {
+      throw new Error('Invalid path')
+    }
+  
+    const req = SNI.PutFileRequest.create({ uri, path, data: fileContents })
+    await this.clients.DeviceFilesystem.putFile(req)
+    return path
+  }
+
+  async readDirectory (uri: string, path: string) {
+    const req = SNI.ReadDirectoryRequest.create({ path, uri })
+    const call = await this.clients.readDirectory(req)
+    const data = call.response.entries
+    const rawFiles = data.filter((entry: any) => entry.type === 1)
+    const rawFolders = data.filter((entry: any) => entry.type === 0)
+    const folders = getFolders(rawFolders, path)
+    const files = getFiles(rawFiles, path)
+    return folders.concat(files)
+  }
+
+  async resetSystem(uri: string) {
+    const req = SNI.ResetSystemRequest.create({ uri })
+    const call = await this.clients.DeviceControl.resetSystem(req)
+    return call.response
+  }
+
+  async resetToMenu (uri: string) {
+    const req = SNI.ResetToMenuRequest.create({ uri })
+    const call = await this.clients.DeviceControl.resetToMenu(req)
+    return call.response
   }
 }
 
