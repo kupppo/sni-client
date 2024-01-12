@@ -326,7 +326,7 @@ export function Drawer({
                     })
                     setCurrentFile(null)
                     // revalidate directory of the removed file
-                    mutate(['readDirectory', '/', uri])
+                    mutate(['readDirectory', '/'])
                     setConfirmDelete(false)
                   } else {
                     setConfirmDelete(true)
@@ -346,7 +346,7 @@ export function Drawer({
 export default function FileTreeWrapper(): JSX.Element | null {
   const { mutate } = useSWRConfig()
   const data = useSNI('devices', { refreshInterval: 50 })
-  const currentScreen = useSNI(['currentScreen', data?.current?.uri], {
+  const currentScreen = useSNI('currentScreen', {
     refreshInterval: 200,
   })
 
@@ -361,7 +361,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
       await SNI.putFile(data.current.uri, file.name, fileContents)
 
       // revalidate directory to show new file
-      mutate(['readDirectory', '/', data.current.uri])
+      mutate(['readDirectory', '/'])
       toast.success(`Added ${file.name}`, {
         id: toastId,
       })

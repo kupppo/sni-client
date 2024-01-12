@@ -103,6 +103,7 @@ const validatePath = (path: string) => {
 class SNIClient {
   transport: GrpcWebFetchTransport
   clients: any
+  connectedUri: string | null = null
 
   constructor() {
     this.transport = setupTransport()
@@ -111,8 +112,25 @@ class SNIClient {
     return this
   }
 
-  async currentScreen (uri: string) {
+  async connect(input?: DeviceKind | string | null) {
+    console.log('connect', input)
+    const devices = await this.listRawDevices()
+    if (devices.length > 0) {
+      const firstDevice = devices[0]
+      const uri = firstDevice.uri
+      this.connectedUri = uri
+      console.log('connected to ', uri)
+      return uri
+    }
+  }
+
+  async currentScreen () {
     try {
+      if (!this.connectedUri) {
+        throw new Error('No connected device')
+      }
+
+      const uri = this.connectedUri
       const req = await this.getFields(uri, ['RomFileName'])
       if (req.values[0] !== '/sd2snes/m3nu.bin') {
         return 'game'
@@ -178,6 +196,17 @@ class SNIClient {
     }
   }
 
+  async listRawDevices(kinds?: string[]) {
+    const req = SNI.DevicesRequest.create({ kinds })
+    const devicesCall = await this.clients.Devices.listDevices(req)
+    const devices: any[] = devicesCall.response.devices.map((device: any) => {
+      const rawCapabilities = device.capabilities
+      const capabilities = mapCapabilities(device.capabilities)
+      return { ...device, capabilities, rawCapabilities }
+    })
+    return devices
+  }
+
   async putFile (uri: string, path: string, fileContents: Uint8Array) {
     if (path.length === 0) {
       throw new Error('Invalid path')
@@ -188,7 +217,12 @@ class SNIClient {
     return path
   }
 
-  async readDirectory (uri: string, path: string) {
+  async readDirectory (path: string) {
+    if (!this.connectedUri) {
+      throw new Error('No connected device')
+    }
+
+    const uri = this.connectedUri
     const req = SNI.ReadDirectoryRequest.create({ path, uri })
     const call = await this.clients.DeviceFilesystem.readDirectory(req)
     const data = call.response.entries

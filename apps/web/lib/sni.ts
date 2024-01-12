@@ -4,6 +4,7 @@ import SNIClient from '@repo/sni'
 import useSWR from 'swr'
 
 let CLIENT = new SNIClient()
+CLIENT.connect()
 
 export const SNI = CLIENT
 
@@ -19,13 +20,10 @@ const fetcher = async (key: string | string[] | null) => {
         throw new Error('Invalid URI or path')
       }
       return {
-        data: await SNI.readDirectory(key[2], key[1]),
+        data: await SNI.readDirectory(key[1]),
       }
-    case key.includes('currentScreen'):
-      if (!key[1]) {
-        throw new Error('Invalid URI')
-      }
-      return { data: await SNI.currentScreen(key[1]) }
+    case key === 'currentScreen':
+      return { data: await SNI.currentScreen() }
     default:
       return null
   }
