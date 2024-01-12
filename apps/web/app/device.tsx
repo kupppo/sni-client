@@ -4,7 +4,7 @@ import { useSNI } from '@/lib/sni'
 import SNIError from '@/components/sniError'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { resetSystem, resetToMenu } from '@/lib/sni/api'
+import { SNI } from '@/lib/sni'
 import { toast } from 'sonner'
 import { PropsWithChildren } from 'react'
 
@@ -69,7 +69,7 @@ export default function DeviceView(): JSX.Element {
                   onClick={async (evt) => {
                     try {
                       evt.preventDefault()
-                      await resetSystem(data.current.uri)
+                      await SNI.resetSystem(data.current.uri)
                     } catch (err) {
                       const error = err as Error
                       const notConfigured = error.message.includes(
@@ -91,13 +91,13 @@ export default function DeviceView(): JSX.Element {
               </div>
             )}
             {data.current.capabilities.includes('ResetToMenu') && (
-              <div>
+              <div className="mb-4">
                 <Button
                   variant="outline"
                   onClick={async (evt) => {
                     try {
                       evt.preventDefault()
-                      await resetToMenu(data.current.uri)
+                      await SNI.resetToMenu(data.current.uri)
                     } catch (err) {
                       const error = err as Error
                       const notConfigured = error.message.includes(
@@ -118,6 +118,19 @@ export default function DeviceView(): JSX.Element {
                 </Button>
               </div>
             )}
+            <div>
+              <Button
+                variant="outline"
+                onClick={async (evt) => {
+                  evt.preventDefault()
+                  const currentField = await SNI.getFields(data.current.uri, ['RomFileName'])
+                  const value = currentField.values[0]
+                  toast(`Current file: ${value}`)
+                }}
+              >
+                Get Current file
+              </Button>
+            </div>
           </div>
         </div>
       </div>

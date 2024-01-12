@@ -1,13 +1,6 @@
 'use client'
 
-import { useSNI } from '@/lib/sni'
-import {
-  bootFile,
-  deleteFile,
-  putFile,
-  resetSystem,
-  resetToMenu,
-} from '@/lib/sni/api'
+import { SNI, useSNI } from '@/lib/sni'
 import {
   FileIcon,
   FolderIcon,
@@ -314,7 +307,7 @@ export function Drawer({
                 className="flex-1"
                 onClick={(evt: any) => {
                   evt.preventDefault()
-                  bootFile(uri, currentFile)
+                  SNI.bootFile(uri, currentFile)
                 }}
               >
                 Boot file
@@ -326,7 +319,7 @@ export function Drawer({
                   evt.preventDefault()
                   if (confirmDelete) {
                     const toastId = toast.loading(`Deleting file`)
-                    await deleteFile(uri, currentFile)
+                    await SNI.deleteFile(uri, currentFile)
                     toast.success(`Deleted file`, {
                       id: toastId,
                       duration: 3000,
@@ -365,7 +358,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
       const file = evt.target.files[0]
       const toastId = toast.loading(`Adding ${file.name}`)
       const fileContents = await readFile(file)
-      await putFile(data.current.uri, file.name, fileContents)
+      await SNI.putFile(data.current.uri, file.name, fileContents)
 
       // revalidate directory to show new file
       mutate(['readDirectory', '/', data.current.uri])
@@ -420,7 +413,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
                 variant="outline"
                 onClick={(evt) => {
                   evt.preventDefault()
-                  resetSystem(data.current.uri)
+                  SNI.resetSystem(data.current.uri)
                 }}
               >
                 Reset Game
@@ -429,7 +422,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
                 variant="outline"
                 onClick={(evt) => {
                   evt.preventDefault()
-                  resetToMenu(data.current.uri)
+                  SNI.resetToMenu(data.current.uri)
                 }}
               >
                 Reset to Menu

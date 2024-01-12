@@ -1,0 +1,29 @@
+{
+  "name": "@repo/sni",
+  "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run proto && tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "proto": "protoc --ts_out ./src/lib/proto --proto_path ./src/protos ./src/protos/*.proto"
+  },
+  "dependencies": {
+    "@protobuf-ts/grpcweb-transport": "^2.9.3"
+  },
+  "devDependencies": {
+    "@protobuf-ts/plugin": "^2.9.3",
+    "@protobuf-ts/protoc": "^2.9.3",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  }
+}
