@@ -3,7 +3,9 @@
 import SNIClient from '@repo/sni'
 import useSWR from 'swr'
 
-export const SNI = new SNIClient()
+let CLIENT = new SNIClient()
+
+export const SNI = CLIENT
 
 const fetcher = async (key: string | string[] | null) => {
   if (!key) {

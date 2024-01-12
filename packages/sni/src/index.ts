@@ -107,6 +107,8 @@ class SNIClient {
   constructor() {
     this.transport = setupTransport()
     this.clients = setupClients(this.transport)
+
+    return this
   }
 
   async currentScreen (uri: string) {

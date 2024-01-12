@@ -8,8 +8,6 @@ import { SNI } from '@/lib/sni'
 import { toast } from 'sonner'
 import { PropsWithChildren } from 'react'
 
-const { resetSystem, resetToMenu } = SNI
-
 const Label = (props: PropsWithChildren) => (
   <span className="font-bold block w-32">{props.children}</span>
 )
@@ -71,7 +69,7 @@ export default function DeviceView(): JSX.Element {
                   onClick={async (evt) => {
                     try {
                       evt.preventDefault()
-                      await resetSystem(data.current.uri)
+                      await SNI.resetSystem(data.current.uri)
                     } catch (err) {
                       const error = err as Error
                       const notConfigured = error.message.includes(
@@ -99,7 +97,7 @@ export default function DeviceView(): JSX.Element {
                   onClick={async (evt) => {
                     try {
                       evt.preventDefault()
-                      await resetToMenu(data.current.uri)
+                      await SNI.resetToMenu(data.current.uri)
                     } catch (err) {
                       const error = err as Error
                       const notConfigured = error.message.includes(
