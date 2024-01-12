@@ -3,7 +3,8 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "noEmit": true,
   },
   "include": [
     "**/*.ts",
