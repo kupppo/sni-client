@@ -91,7 +91,7 @@ export default function DeviceView(): JSX.Element {
               </div>
             )}
             {data.current.capabilities.includes('ResetToMenu') && (
-              <div>
+              <div className="mb-4">
                 <Button
                   variant="outline"
                   onClick={async (evt) => {
@@ -118,6 +118,19 @@ export default function DeviceView(): JSX.Element {
                 </Button>
               </div>
             )}
+            <div>
+              <Button
+                variant="outline"
+                onClick={async (evt) => {
+                  evt.preventDefault()
+                  const currentField = await SNI.getFields(data.current.uri, ['RomFileName'])
+                  const value = currentField.values[0]
+                  toast(`Current file: ${value}`)
+                }}
+              >
+                Get Current file
+              </Button>
+            </div>
           </div>
         </div>
       </div>
