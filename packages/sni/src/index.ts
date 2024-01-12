@@ -60,21 +60,18 @@ class SNIClient {
         const capabilities = mapCapabilities(device.capabilities)
         return { ...device, capabilities, rawCapabilities }
       })
-  
-      // if (devices.length === 0) {
-      //   throw new Error('No devices found')
-      // }
-  
+
       return {
         connected: devices.length > 0,
         devices,
         // TODO: Make this configurable and rememberable
         current: devices[0],
       }
+
     } catch (err: unknown) {
       const error = err as Error
-      console.error('listDevices error', error.message)
-      throw new Error('NoConnection')
+      console.debug('SNI.listDevices error', error)
+      throw new Error('No Connection')
     }
   }
 }
