@@ -113,14 +113,18 @@ class SNIClient {
   }
 
   async connect(input?: DeviceKind | string | null) {
-    console.log('connect', input)
-    const devices = await this.listRawDevices()
-    if (devices.length > 0) {
-      const firstDevice = devices[0]
-      const uri = firstDevice.uri
-      this.connectedUri = uri
-      console.log('connected to ', uri)
-      return uri
+    try {
+      const devices = await this.listRawDevices()
+      if (devices.length > 0) {
+        const firstDevice = devices[0]
+        const uri = firstDevice.uri
+        this.connectedUri = uri
+        return uri
+      } else {
+        return null
+      }
+    } catch (err: unknown) {
+      console.error(err)
     }
   }
 

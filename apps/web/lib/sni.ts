@@ -2,9 +2,9 @@
 
 import SNIClient from '@repo/sni'
 import useSWR from 'swr'
+import { useEffect, useState } from 'react'
 
 let CLIENT = new SNIClient()
-CLIENT.connect()
 
 export const SNI = CLIENT
 
@@ -30,7 +30,15 @@ const fetcher = async (key: string | string[] | null) => {
 }
 
 export const useSNI = (key: string | string[], opts?: object) => {
-  const { data, ...hook } = useSWR(key, {
+  const [clientReady, setClientReady] = useState(false)
+  useEffect(() => {
+    const autoConnect = async () => {
+      await SNI.connect()
+      setClientReady(true)
+    }
+    autoConnect()
+  }, [])
+  const { data, ...hook } = useSWR(clientReady && key, {
     ...opts,
     fetcher,
   })
