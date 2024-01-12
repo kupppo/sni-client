@@ -1,9 +1,12 @@
 'use client'
 
 import useSWR from 'swr'
-import { listDevices, readDirectory } from './api'
+import { currentScreen, listDevices, readDirectory } from './api'
 
-const fetcher = async (key: string | string[]) => {
+const fetcher = async (key: string | string[] | null) => {
+  if (!key) {
+    return null
+  }
   switch (true) {
     case key === 'devices':
       return await listDevices()
@@ -14,6 +17,11 @@ const fetcher = async (key: string | string[]) => {
       return {
         data: await readDirectory(key[2], key[1]),
       }
+    case key.includes('currentScreen'):
+      if (!key[1]) {
+        throw new Error('Invalid URI')
+      }
+      return { data: await currentScreen(key[1]) }
     default:
       return null
   }
