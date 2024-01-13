@@ -136,10 +136,12 @@ class SNIClient {
 
       const uri = this.connectedUri
       const req = await this.getFields(uri, ['RomFileName'])
-      if (req.values[0] !== '/sd2snes/m3nu.bin') {
-        return 'game'
+      // the FxPak Pro will either use menu.bin or m3nu.bin
+      // and a game will normally end with .sfc or .smc
+      if (req.values[0].endsWith('.bin')) {
+        return 'menu'
       }
-      return 'menu'
+      return 'game'
     } catch (err: unknown) {
       const error = err as Error
       console.error('currentScreen', error.message)
