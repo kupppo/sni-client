@@ -135,7 +135,7 @@ function FileTree({
   setCurrentFile?: any
   depth?: number
 }): JSX.Element {
-  const { data, isLoading, error } = useSNI(['readDirectory', path, uri])
+  const { data, isLoading, error } = useSNI(['readDirectory', path])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     noClick: true,
@@ -153,7 +153,7 @@ function FileTree({
     return <div />
   }
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <ul className={cn('list-none')}>
         <li className={'whitespace-nowrap relative'}>

@@ -16,11 +16,8 @@ const fetcher = async (key: string | string[] | null) => {
     case key === 'devices':
       return await SNI.listDevices()
     case key.includes('readDirectory'):
-      if (!key[1] || !key[2]) {
-        throw new Error('Invalid URI or path')
-      }
       return {
-        data: await SNI.readDirectory(key[1]),
+        data: await SNI.readDirectory(key[1] as string),
       }
     case key === 'currentScreen':
       return { data: await SNI.currentScreen() }
@@ -37,6 +34,8 @@ export const useSNI = (key: string | string[], opts?: object) => {
       setClientReady(true)
     }
     autoConnect()
+    // TODO: Set up an event to listen to when the device is disconnected to
+    // remove the connectedURI
   }, [])
   const { data, ...hook } = useSWR(clientReady && key, {
     ...opts,
