@@ -84,6 +84,13 @@ function Folder({
   uri: string
 }) {
   const [open, setOpen] = useState(false)
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    noClick: true,
+    noDragEventsBubbling: true,
+    onDrop: (acceptedFiles) => {
+      toast(`Dropped ${acceptedFiles[0]?.name} into ${path}`)
+    },
+  })
   const handleOpen = useCallback(
     (evt: MouseEvent<HTMLButtonElement>) => {
       evt.preventDefault()
@@ -92,8 +99,19 @@ function Folder({
     [open, setOpen],
   )
 
+  useEffect(() => {
+    if (isDragActive) {
+      setTimeout(() => {
+        if (isDragActive && !open) {
+          setOpen(true)
+        }
+      }, 1000)
+    }
+  }, [isDragActive, open, setOpen])
+
   return (
-    <li className={'whitespace-nowrap relative'}>
+    <li {...getRootProps()} className={cn('whitespace-nowrap relative')}>
+      <input {...getInputProps()} />
       <button onClick={handleOpen} className={cn('flex items-center')}>
         {depth > 0 ? <Indents depth={depth} /> : <div className="w-8" />}
         <div className={cn('absolute')}>
@@ -103,14 +121,21 @@ function Folder({
             <PlusSquare size={14} strokeWidth={2} />
           )}
         </div>
-        <div className={cn('ml-4 mr-2')}>
-          {open ? (
-            <FolderOpen size={20} strokeWidth={1} />
-          ) : (
-            <FolderIcon size={20} strokeWidth={1} />
+        <div
+          className={cn(
+            'flex items-center',
+            isDragActive && 'bg-connected text-background',
           )}
+        >
+          <div className={cn('ml-4 mr-2')}>
+            {open ? (
+              <FolderOpen size={20} strokeWidth={1} />
+            ) : (
+              <FolderIcon size={20} strokeWidth={1} />
+            )}
+          </div>
+          <span className={cn('text-md pr-4')}>{name}</span>
         </div>
-        <span className={cn('text-md')}>{name}</span>
       </button>
       {open && (
         <FileTree
@@ -170,7 +195,7 @@ function FileTree({
   const files = data.filter((entry: any) => entry.type === 1)
 
   return (
-    <div {...getRootProps()} className={cn(isDragActive && 'bg-zinc-400')}>
+    <div {...getRootProps()} className={cn(isDragActive && 'bg-zinc-800')}>
       <input {...getInputProps()} />
       <ul className={cn('list-none')}>
         {folders.map((folder: any) => (
