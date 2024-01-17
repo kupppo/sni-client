@@ -117,15 +117,25 @@ function Folder({
     [open, setOpen],
   )
 
-  useEffect(() => {
-    if (isDragActive) {
-      setTimeout(() => {
-        if (isDragActive && !open) {
-          setOpen(true)
-        }
-      }, 1000)
+  const handleDrag = useCallback(() => {
+    if (isDragActive && !open) {
+      setOpen(true)
     }
   }, [isDragActive, open, setOpen])
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>
+    if (isDragActive) {
+      timer = setTimeout(() => {
+        handleDrag()
+      }, 700)
+    }
+    return () => {
+      if (timer) {
+        clearTimeout(timer)
+      }
+    }
+  }, [handleDrag, isDragActive])
 
   return (
     <li {...getRootProps()} className={cn('whitespace-nowrap relative')}>
