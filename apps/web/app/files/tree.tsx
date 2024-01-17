@@ -356,7 +356,9 @@ export default function FileTreeWrapper(): JSX.Element | null {
   const handleFileChange = useCallback(
     async (evt: any) => {
       const file = evt.target.files[0]
-      const toastId = toast.loading(`Adding ${file.name}`)
+      const toastId = toast.loading(`Adding ${file.name}`, {
+        duration: Infinity,
+      })
       const fileContents = await readFile(file)
       await SNI.putFile(data.current.uri, file.name, fileContents)
 
