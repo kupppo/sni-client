@@ -83,12 +83,30 @@ function Folder({
   setCurrentFile?: any
   uri: string
 }) {
+  const { mutate } = useSWRConfig()
   const [open, setOpen] = useState(false)
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     noClick: true,
     noDragEventsBubbling: true,
-    onDrop: (acceptedFiles) => {
-      toast(`Dropped ${acceptedFiles[0]?.name} into ${path}`)
+    onDrop: async (acceptedFiles) => {
+      const file = acceptedFiles[0] as File
+      const contents = await readFile(file)
+      const toastId = toast.loading(`Adding ${file.name} into ${path}`, {
+        duration: Infinity,
+      })
+      let basePath = path
+      if (!basePath.endsWith('/')) {
+        basePath += '/'
+      }
+      const destination = `${basePath}${file.name}`
+      await SNI.putFile(uri, destination, contents)
+
+      // revalidate directory to show new file
+      mutate(['readDirectory', path, uri])
+      toast.success(`Added ${file.name}`, {
+        id: toastId,
+        duration: 4500,
+      })
     },
   })
   const handleOpen = useCallback(
@@ -160,13 +178,31 @@ function FileTree({
   setCurrentFile?: any
   depth?: number
 }): JSX.Element {
+  const { mutate } = useSWRConfig()
   const { data, isLoading, error } = useSNI(['readDirectory', path, uri])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     noClick: true,
     noDragEventsBubbling: true,
-    onDrop: (acceptedFiles) => {
-      toast(`Dropped ${acceptedFiles[0]?.name} into ${path}`)
+    onDrop: async (acceptedFiles) => {
+      const file = acceptedFiles[0] as File
+      const contents = await readFile(file)
+      const toastId = toast.loading(`Adding ${file.name} into ${path}`, {
+        duration: Infinity,
+      })
+      let basePath = path
+      if (!basePath.endsWith('/')) {
+        basePath += '/'
+      }
+      const destination = `${basePath}${file.name}`
+      await SNI.putFile(uri, destination, contents)
+
+      // revalidate directory to show new file
+      mutate(['readDirectory', path, uri])
+      toast.success(`Added ${file.name}`, {
+        id: toastId,
+        duration: 4500,
+      })
     },
   })
 
@@ -391,6 +427,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
       mutate(['readDirectory', '/', data.current.uri])
       toast.success(`Added ${file.name}`, {
         id: toastId,
+        duration: 4500,
       })
     },
     [data.current],
