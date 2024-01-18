@@ -20,6 +20,8 @@ const getDeviceDisplay = (sniName: string) => {
   switch (sniName) {
     case 'fxpakpro':
       return 'FX Pak Pro'
+    case 'luabridge':
+      return 'Luabridge'
     default:
       return ''
   }
