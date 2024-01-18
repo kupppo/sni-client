@@ -173,6 +173,21 @@ class SNIClient {
     }
   }
 
+  async connectedDevice() {
+    try {
+      const uri = this.connectedUri
+      if (!uri) {
+        throw new Error('No connected device')
+      }
+      const devices = await this.listRawDevices({ uri })
+      // TODO: If no devices are returned, this should fire a disconnected event
+      const device = devices[0]
+      return device
+    } catch (err: unknown) {
+      console.error(err)
+    }
+  }
+
   async currentScreen () {
     try {
       if (!this.connectedUri) {
@@ -262,8 +277,8 @@ class SNIClient {
     }
   }
 
-  async listRawDevices(kinds?: string[]) {
-    const req = SNI.DevicesRequest.create({ kinds })
+  async listRawDevices(args?: { kinds?: DeviceKind[], uri?: string }) {
+    const req = SNI.DevicesRequest.create(args)
     const devicesCall = await this.clients.Devices.listDevices(req)
     const devices: any[] = devicesCall.response.devices.map((device: any) => {
       const rawCapabilities = device.capabilities

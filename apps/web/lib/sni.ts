@@ -15,6 +15,8 @@ const fetcher = async (key: string | string[] | null) => {
     return null
   }
   switch (true) {
+    case key === 'connectedDevice':
+      return { data: await SNI.connectedDevice() }
     case key === 'devices':
       return await SNI.listDevices()
     case key.includes('readDirectory'):
