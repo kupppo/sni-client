@@ -28,24 +28,23 @@ const getDeviceDisplay = (sniName: string) => {
 }
 
 const ConnectionStatus = () => {
-  const data = useSNI('devices', { refreshInterval: 50 })
-  const connected = data?.connected
-  if (data.isLoading) {
+  const { data, isLoading, error } = useSNI('connectedDevice', { refreshInterval: 50 })
+  if (isLoading) {
     return (
       <Button variant="ghost" size="xs">
         <Status status="pending" label="Connecting" />
       </Button>
     )
   }
-  if (data.error) {
+  if (error) {
     return (
       <Button variant="ghost" size="xs">
         <Status status="error" label="Error" />
       </Button>
     )
   }
-  if (connected) {
-    const deviceDisplay = getDeviceDisplay(data.current.kind)
+  if (data) {
+    const deviceDisplay = getDeviceDisplay(data.kind)
     return (
       <Popover>
         <PopoverTrigger asChild>
@@ -58,20 +57,20 @@ const ConnectionStatus = () => {
             <p>
               <strong>Device Name</strong>
               <br />
-              <Mono>{data.current.displayName}</Mono>
+              <Mono>{data.displayName}</Mono>
             </p>
             <br />
             <p>
               <strong>URI</strong>
               <br />
-              <Mono>{data.current.uri}</Mono>
+              <Mono>{data.uri}</Mono>
               <br />
             </p>
             <br />
             <p>
               <strong>Kind</strong>
               <br />
-              <Mono>{data.current.kind}</Mono>
+              <Mono>{data.kind}</Mono>
               <br />
             </p>
           </div>
