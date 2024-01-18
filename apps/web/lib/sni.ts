@@ -27,17 +27,11 @@ const fetcher = async (key: string | string[] | null) => {
 }
 
 export const useSNI = (key: string | string[], opts?: object) => {
-  const [clientReady, setClientReady] = useState(false)
+  const [mounted, setMounted] = useState(false)
   useEffect(() => {
-    const autoConnect = async () => {
-      await SNI.connect()
-      setClientReady(true)
-    }
-    autoConnect()
-    // TODO: Set up an event to listen to when the device is disconnected to
-    // remove the connectedURI
-  }, [])
-  const { data, ...hook } = useSWR(clientReady && key, {
+    setMounted(true)
+  }, [mounted])
+  const { data, ...hook } = useSWR(mounted && key, {
     ...opts,
     fetcher,
   })

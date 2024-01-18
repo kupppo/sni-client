@@ -1,4 +1,5 @@
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
+import EventEmitter from 'eventemitter3'
 import { SNI, Clients } from './lib'
 
 export type DeviceKind = 'fxpakpro' | 'luabridge' | 'retroarch'
@@ -100,16 +101,48 @@ const validatePath = (path: string) => {
   }
 }
 
+export type SNIClientOptions = {
+  autoConnect?: boolean
+}
+
+const DEFAULT_OPTIONS = {
+  autoConnect: true
+}
+
 class SNIClient {
   transport: GrpcWebFetchTransport
   clients: any
   connectedUri: string | null = null
+  options: SNIClientOptions
+  #emitter: any
 
-  constructor() {
+  constructor(options: Partial<SNIClientOptions> = {}) {
+    this.options = { ...DEFAULT_OPTIONS, ...options }
     this.transport = setupTransport()
     this.clients = setupClients(this.transport)
+    this.#emitter = new EventEmitter()
+
+    this.#emitter.on('connected', (uri: string) => {
+      console.debug(`SNI Client connected to: ${uri}`)
+    })
+
+    if (this.options.autoConnect) {
+      this.connect()
+    }
 
     return this
+  }
+
+  off(eventName: string, listener: (...args: any[]) => void) {
+    this.#emitter.off(eventName, listener)
+  }
+
+  on(eventName: string, listener: (...args: any[]) => void) {
+    this.#emitter.on(eventName, listener)
+  }
+
+  once(eventName: string, listener: (...args: any[]) => void) {
+    this.#emitter.once(eventName, listener)
   }
 
   async connect(input?: DeviceKind | string | null) {
@@ -118,7 +151,11 @@ class SNIClient {
       if (devices.length > 0) {
         const firstDevice = devices[0]
         const uri = firstDevice.uri
+
+        // TODO: Should this fire a disconnected event if there is already a connectedUri?
+        //       Technically, it has not disconnected, although the client has switched
         this.connectedUri = uri
+        this.#emitter.emit('connected', uri)
         return uri
       } else {
         return null
@@ -134,7 +171,6 @@ class SNIClient {
         throw new Error('No connected device')
       }
 
-      const uri = this.connectedUri
       const req = await this.getFields(['RomFileName'])
       // the FxPak Pro will either use menu.bin or m3nu.bin
       // and a game will normally end with .sfc or .smc

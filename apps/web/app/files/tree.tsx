@@ -13,7 +13,7 @@ import SNIError from '@/components/sniError'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MouseEvent } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { cn } from '@/lib/utils'
+import { cn, getFolderFromFile } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useSWRConfig } from 'swr'
@@ -389,7 +389,8 @@ export function Drawer({
                     })
                     setCurrentFile(null)
                     // revalidate directory of the removed file
-                    mutate(['readDirectory', '/'])
+                    const folderPath = getFolderFromFile(currentFile)
+                    mutate(['readDirectory', folderPath])
                     setConfirmDelete(false)
                   } else {
                     setConfirmDelete(true)
