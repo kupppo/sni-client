@@ -103,11 +103,13 @@ const validatePath = (path: string) => {
 
 export type SNIClientOptions = {
   autoConnect?: boolean
+  healthInterval?: number
   verbose?: boolean
 }
 
 const DEFAULT_OPTIONS = {
   autoConnect: true,
+  healthInterval: 500,
   verbose: false,
 }
 
@@ -116,7 +118,8 @@ class SNIClient {
   clients: any
   connectedUri: string | null = null
   options: SNIClientOptions
-  #emitter: any
+  #emitter: EventEmitter
+  #healthInterval?: number | NodeJS.Timeout
 
   constructor(options: Partial<SNIClientOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options }
@@ -133,6 +136,15 @@ class SNIClient {
     }
 
     return this
+  }
+
+  async #health() {
+    try {
+      await this.connectedDevice()
+    } catch (err) {
+      console.error(err)
+      this.#emitter.emit('disconnected')
+    }
   }
 
   #log(...args: any[]) {
@@ -164,6 +176,7 @@ class SNIClient {
         //       Technically, it has not disconnected, although the client has switched
         this.connectedUri = uri
         this.#emitter.emit('connected', uri)
+        this.#healthInterval = setInterval(() => this.#health(), this.options.healthInterval)
         return uri
       } else {
         return null

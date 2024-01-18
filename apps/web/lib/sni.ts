@@ -32,10 +32,19 @@ const fetcher = async (key: string | string[] | null) => {
 
 export const useSNI = (key: string | string[], opts?: object) => {
   const [mounted, setMounted] = useState(false)
+  const [clientReady, setClientReady] = useState(false)
   useEffect(() => {
     setMounted(true)
+    SNI.on('connected', () => {
+      console.log('client connected')
+      setClientReady(true)
+    })
+    // on disconnect, send invalidation signal
+    SNI.on('disconnected', () => {
+      console.log('client disconnected :(')
+    })
   }, [mounted])
-  const { data, ...hook } = useSWR(mounted && key, {
+  const { data, ...hook } = useSWR(clientReady && mounted && key, {
     ...opts,
     fetcher,
   })
