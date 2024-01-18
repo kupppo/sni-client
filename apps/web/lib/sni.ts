@@ -4,7 +4,9 @@ import SNIClient from '@repo/sni'
 import useSWR from 'swr'
 import { useEffect, useState } from 'react'
 
-let CLIENT = new SNIClient()
+let CLIENT = new SNIClient({
+  verbose: true,
+})
 
 export const SNI = CLIENT
 

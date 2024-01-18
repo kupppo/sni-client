@@ -103,10 +103,12 @@ const validatePath = (path: string) => {
 
 export type SNIClientOptions = {
   autoConnect?: boolean
+  verbose?: boolean
 }
 
 const DEFAULT_OPTIONS = {
-  autoConnect: true
+  autoConnect: true,
+  verbose: false,
 }
 
 class SNIClient {
@@ -123,7 +125,7 @@ class SNIClient {
     this.#emitter = new EventEmitter()
 
     this.#emitter.on('connected', (uri: string) => {
-      console.debug(`SNI Client connected to: ${uri}`)
+      this.#log(`SNI Client connected to: ${uri}`)
     })
 
     if (this.options.autoConnect) {
@@ -131,6 +133,12 @@ class SNIClient {
     }
 
     return this
+  }
+
+  #log(...args: any[]) {
+    if (this.options.verbose) {
+      console.debug(...args)
+    }
   }
 
   off(eventName: string, listener: (...args: any[]) => void) {
@@ -248,7 +256,7 @@ class SNIClient {
 
     } catch (err: unknown) {
       const error = err as Error
-      console.debug('SNI.listDevices error', error)
+      this.#log('SNI.listDevices error', error)
       throw new Error('No Connection')
     }
   }
