@@ -75,13 +75,11 @@ function Folder({
   depth = 0,
   path,
   setCurrentFile,
-  uri,
 }: {
   name: string
   depth: number
   path: string
   setCurrentFile?: any
-  uri: string
 }) {
   const { mutate } = useSWRConfig()
   const [open, setOpen] = useState(false)
@@ -99,10 +97,10 @@ function Folder({
         basePath += '/'
       }
       const destination = `${basePath}${file.name}`
-      await SNI.putFile(uri, destination, contents)
+      await SNI.putFile(destination, contents)
 
       // revalidate directory to show new file
-      mutate(['readDirectory', path, uri])
+      mutate(['readDirectory', path])
       toast.success(`Added ${file.name}`, {
         id: toastId,
         duration: 4500,
@@ -168,7 +166,6 @@ function Folder({
       {open && (
         <FileTree
           path={path}
-          uri={uri}
           setCurrentFile={setCurrentFile}
           depth={depth + 1}
         />
@@ -178,12 +175,10 @@ function Folder({
 }
 
 function FileTree({
-  uri,
   path = '/',
   setCurrentFile,
   depth = 0,
 }: {
-  uri: string
   path: string
   setCurrentFile?: any
   depth?: number
@@ -205,10 +200,10 @@ function FileTree({
         basePath += '/'
       }
       const destination = `${basePath}${file.name}`
-      await SNI.putFile(uri, destination, contents)
+      await SNI.putFile(destination, contents)
 
       // revalidate directory to show new file
-      mutate(['readDirectory', path, uri])
+      mutate(['readDirectory', path])
       toast.success(`Added ${file.name}`, {
         id: toastId,
         duration: 4500,
@@ -249,7 +244,6 @@ function FileTree({
             key={folder.path}
             {...folder}
             depth={depth}
-            uri={uri}
             setCurrentFile={setCurrentFile}
           />
         ))}
@@ -292,12 +286,10 @@ async function readFile(file: File): Promise<Uint8Array> {
 export function Drawer({
   currentFile,
   setCurrentFile,
-  uri,
 }: {
   currentFile: string | null
   // eslint-disable-next-line no-unused-vars
   setCurrentFile: (_path: string | null) => void
-  uri: string
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -378,7 +370,7 @@ export function Drawer({
                 className="flex-1"
                 onClick={(evt: any) => {
                   evt.preventDefault()
-                  SNI.bootFile(uri, currentFile)
+                  SNI.bootFile(currentFile)
                 }}
               >
                 Boot file
@@ -390,7 +382,7 @@ export function Drawer({
                   evt.preventDefault()
                   if (confirmDelete) {
                     const toastId = toast.loading(`Deleting file`)
-                    await SNI.deleteFile(uri, currentFile)
+                    await SNI.deleteFile(currentFile)
                     toast.success(`Deleted file`, {
                       id: toastId,
                       duration: 3000,
@@ -431,7 +423,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
         duration: Infinity,
       })
       const fileContents = await readFile(file)
-      await SNI.putFile(data.current.uri, file.name, fileContents)
+      await SNI.putFile(file.name, fileContents)
 
       // revalidate directory to show new file
       mutate(['readDirectory', '/'])
@@ -465,11 +457,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
   return (
     <div className="w-full font-mono">
       <div className={cn('border-t border-zinc-800 px-4 py-4')} />
-      <FileTree
-        uri={data.current.uri}
-        setCurrentFile={setCurrentFile}
-        path="/"
-      />
+      <FileTree setCurrentFile={setCurrentFile} path="/" />
       <div className={cn('border-t border-zinc-900 mt-8 py-4 font-sans')}>
         <div className="flex gap-3">
           <Button
@@ -487,7 +475,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
                 variant="outline"
                 onClick={(evt) => {
                   evt.preventDefault()
-                  SNI.resetSystem(data.current.uri)
+                  SNI.resetSystem()
                 }}
               >
                 Reset Game
@@ -496,7 +484,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
                 variant="outline"
                 onClick={(evt) => {
                   evt.preventDefault()
-                  SNI.resetToMenu(data.current.uri)
+                  SNI.resetToMenu()
                 }}
               >
                 Reset to Menu
@@ -511,11 +499,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
           />
         </div>
       </div>
-      <Drawer
-        uri={data.current.uri}
-        currentFile={currentFile}
-        setCurrentFile={setCurrentFile}
-      />
+      <Drawer currentFile={currentFile} setCurrentFile={setCurrentFile} />
     </div>
   )
 }

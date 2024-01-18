@@ -135,7 +135,7 @@ class SNIClient {
       }
 
       const uri = this.connectedUri
-      const req = await this.getFields(uri, ['RomFileName'])
+      const req = await this.getFields(['RomFileName'])
       // the FxPak Pro will either use menu.bin or m3nu.bin
       // and a game will normally end with .sfc or .smc
       if (req.values[0].endsWith('.bin')) {
@@ -149,7 +149,12 @@ class SNIClient {
     }
   }
 
-  async bootFile (uri: string, path: string) {
+  async bootFile (path: string) {
+    if (!this.connectedUri) {
+      throw new Error('No connected device')
+    }
+
+    const uri = this.connectedUri
     validatePath(path)
   
     const req = SNI.BootFileRequest.create({ uri, path })
@@ -157,7 +162,12 @@ class SNIClient {
     return path
   }
   
-  async deleteFile (uri: string, path: string) {
+  async deleteFile (path: string) {
+    if (!this.connectedUri) {
+      throw new Error('No connected device')
+    }
+
+    const uri = this.connectedUri
     validatePath(path)
   
     const req = SNI.RemoveFileRequest.create({ uri, path })
@@ -165,7 +175,12 @@ class SNIClient {
     return path
   }
 
-  async getFields (uri: string, inputFields: string[]) {
+  async getFields (inputFields: string[]) {
+    if (!this.connectedUri) {
+      throw new Error('No connected device')
+    }
+
+    const uri = this.connectedUri
     const fields = inputFields.filter(
       (field) => FIELDS[field as keyof typeof FIELDS],
     )
@@ -213,10 +228,13 @@ class SNIClient {
     return devices
   }
 
-  async putFile (uri: string, path: string, fileContents: Uint8Array) {
-    if (path.length === 0) {
-      throw new Error('Invalid path')
+  async putFile (path: string, fileContents: Uint8Array) {
+    if (!this.connectedUri) {
+      throw new Error('No connected device')
     }
+
+    const uri = this.connectedUri
+    validatePath(path)
   
     const req = SNI.PutFileRequest.create({ uri, path, data: fileContents })
     await this.clients.DeviceFilesystem.putFile(req)
@@ -239,13 +257,23 @@ class SNIClient {
     return folders.concat(files)
   }
 
-  async resetSystem(uri: string) {
+  async resetSystem() {
+    if (!this.connectedUri) {
+      throw new Error('No connected device')
+    }
+
+    const uri = this.connectedUri
     const req = SNI.ResetSystemRequest.create({ uri })
     const call = await this.clients.DeviceControl.resetSystem(req)
     return call.response
   }
 
-  async resetToMenu (uri: string) {
+  async resetToMenu () {
+    if (!this.connectedUri) {
+      throw new Error('No connected device')
+    }
+
+    const uri = this.connectedUri
     const req = SNI.ResetToMenuRequest.create({ uri })
     const call = await this.clients.DeviceControl.resetToMenu(req)
     return call.response
