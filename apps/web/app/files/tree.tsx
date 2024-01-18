@@ -409,7 +409,10 @@ export function Drawer({
 
 export default function FileTreeWrapper(): JSX.Element | null {
   const { mutate } = useSWRConfig()
-  const data = useSNI('devices', { refreshInterval: 50 })
+  // TODO: Handle this refresh rate in the client itself
+  const { data, error, isLoading } = useSNI('connectedDevice', {
+    refreshInterval: 50,
+  })
   const currentScreen = useSNI('currentScreen', {
     refreshInterval: 200,
   })
@@ -433,18 +436,21 @@ export default function FileTreeWrapper(): JSX.Element | null {
     })
   }
 
-  if (data.error) {
+  if (error) {
     return <SNIError error={data.error} />
   }
 
-  const connected = data?.connected
-  if (!connected) {
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
+  if (!data) {
     return null
   }
 
   const requiredCapabilities = ['ReadDirectory', 'PutFile']
   const hasRequiredCapabilities = requiredCapabilities.every(
-    (capability: string) => data.current.capabilities.includes(capability),
+    (capability: string) => data.capabilities.includes(capability),
   )
 
   if (!hasRequiredCapabilities) {
