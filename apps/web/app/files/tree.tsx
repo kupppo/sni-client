@@ -417,24 +417,21 @@ export default function FileTreeWrapper(): JSX.Element | null {
   const inputRef = useRef<HTMLInputElement>(null)
   const [currentFile, setCurrentFile] = useState<string | null>(null)
 
-  const handleFileChange = useCallback(
-    async (evt: any) => {
-      const file = evt.target.files[0]
-      const toastId = toast.loading(`Adding ${file.name}`, {
-        duration: Infinity,
-      })
-      const fileContents = await readFile(file)
-      await SNI.putFile(file.name, fileContents)
+  const handleFileChange = async (evt: any) => {
+    const file = evt.target.files[0]
+    const toastId = toast.loading(`Adding ${file.name}`, {
+      duration: Infinity,
+    })
+    const fileContents = await readFile(file)
+    await SNI.putFile(file.name, fileContents)
 
-      // revalidate directory to show new file
-      mutate(['readDirectory', '/'])
-      toast.success(`Added ${file.name}`, {
-        id: toastId,
-        duration: 4500,
-      })
-    },
-    [data.current],
-  )
+    // revalidate directory to show new file
+    mutate(['readDirectory', '/'])
+    toast.success(`Added ${file.name}`, {
+      id: toastId,
+      duration: 4500,
+    })
+  }
 
   if (data.error) {
     return <SNIError error={data.error} />

@@ -237,6 +237,7 @@ class SNIClient {
     return call.response
   }
 
+  // TODO: Refactor this to align with SNI's own `listDevices`
   async listDevices(kinds?: string[]) {
     try {
       const req = SNI.DevicesRequest.create({ kinds })
@@ -250,7 +251,7 @@ class SNIClient {
       return {
         connected: devices.length > 0,
         devices,
-        // TODO: Make this configurable and rememberable
+        // TODO: Remove this
         current: devices[0],
       }
 
