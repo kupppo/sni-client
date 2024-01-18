@@ -1,7 +1,7 @@
 export default function SNIError({ error }: { error: Error }): JSX.Element {
   if (error.message.includes('Missing Filesystem Capabilities')) {
     return <div>Missing Filesystem Capabilities</div>
-  } else if (error.message.includes('NoConnection')) {
+  } else if (error.message.includes('No Connection')) {
     return (
       <article className="max-w-xl">
         <h1 className="text-3xl font-bold mb-2">Cannot connect to SNI</h1>

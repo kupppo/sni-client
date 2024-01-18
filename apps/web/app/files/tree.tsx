@@ -83,7 +83,32 @@ function Folder({
   setCurrentFile?: any
   uri: string
 }) {
+  const { mutate } = useSWRConfig()
   const [open, setOpen] = useState(false)
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    noClick: true,
+    noDragEventsBubbling: true,
+    onDrop: async (acceptedFiles) => {
+      const file = acceptedFiles[0] as File
+      const contents = await readFile(file)
+      const toastId = toast.loading(`Adding ${file.name} into ${path}`, {
+        duration: Infinity,
+      })
+      let basePath = path
+      if (!basePath.endsWith('/')) {
+        basePath += '/'
+      }
+      const destination = `${basePath}${file.name}`
+      await SNI.putFile(uri, destination, contents)
+
+      // revalidate directory to show new file
+      mutate(['readDirectory', path, uri])
+      toast.success(`Added ${file.name}`, {
+        id: toastId,
+        duration: 4500,
+      })
+    },
+  })
   const handleOpen = useCallback(
     (evt: MouseEvent<HTMLButtonElement>) => {
       evt.preventDefault()
@@ -92,8 +117,29 @@ function Folder({
     [open, setOpen],
   )
 
+  const handleDrag = useCallback(() => {
+    if (isDragActive && !open) {
+      setOpen(true)
+    }
+  }, [isDragActive, open, setOpen])
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>
+    if (isDragActive) {
+      timer = setTimeout(() => {
+        handleDrag()
+      }, 700)
+    }
+    return () => {
+      if (timer) {
+        clearTimeout(timer)
+      }
+    }
+  }, [handleDrag, isDragActive])
+
   return (
-    <li className={'whitespace-nowrap relative'}>
+    <li {...getRootProps()} className={cn('whitespace-nowrap relative')}>
+      <input {...getInputProps()} />
       <button onClick={handleOpen} className={cn('flex items-center')}>
         {depth > 0 ? <Indents depth={depth} /> : <div className="w-8" />}
         <div className={cn('absolute')}>
@@ -103,14 +149,21 @@ function Folder({
             <PlusSquare size={14} strokeWidth={2} />
           )}
         </div>
-        <div className={cn('ml-4 mr-2')}>
-          {open ? (
-            <FolderOpen size={20} strokeWidth={1} />
-          ) : (
-            <FolderIcon size={20} strokeWidth={1} />
+        <div
+          className={cn(
+            'flex items-center',
+            isDragActive && 'bg-connected text-background',
           )}
+        >
+          <div className={cn('ml-4 mr-2')}>
+            {open ? (
+              <FolderOpen size={20} strokeWidth={1} />
+            ) : (
+              <FolderIcon size={20} strokeWidth={1} />
+            )}
+          </div>
+          <span className={cn('text-md pr-4')}>{name}</span>
         </div>
-        <span className={cn('text-md')}>{name}</span>
       </button>
       {open && (
         <FileTree
@@ -135,13 +188,31 @@ function FileTree({
   setCurrentFile?: any
   depth?: number
 }): JSX.Element {
+  const { mutate } = useSWRConfig()
   const { data, isLoading, error } = useSNI(['readDirectory', path])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     noClick: true,
     noDragEventsBubbling: true,
-    onDrop: (acceptedFiles) => {
-      toast(`Dropped ${acceptedFiles[0]?.name} into ${path}`)
+    onDrop: async (acceptedFiles) => {
+      const file = acceptedFiles[0] as File
+      const contents = await readFile(file)
+      const toastId = toast.loading(`Adding ${file.name} into ${path}`, {
+        duration: Infinity,
+      })
+      let basePath = path
+      if (!basePath.endsWith('/')) {
+        basePath += '/'
+      }
+      const destination = `${basePath}${file.name}`
+      await SNI.putFile(uri, destination, contents)
+
+      // revalidate directory to show new file
+      mutate(['readDirectory', path, uri])
+      toast.success(`Added ${file.name}`, {
+        id: toastId,
+        duration: 4500,
+      })
     },
   })
 
@@ -170,7 +241,7 @@ function FileTree({
   const files = data.filter((entry: any) => entry.type === 1)
 
   return (
-    <div {...getRootProps()} className={cn(isDragActive && 'bg-zinc-400')}>
+    <div {...getRootProps()} className={cn(isDragActive && 'bg-zinc-800')}>
       <input {...getInputProps()} />
       <ul className={cn('list-none')}>
         {folders.map((folder: any) => (
@@ -356,7 +427,9 @@ export default function FileTreeWrapper(): JSX.Element | null {
   const handleFileChange = useCallback(
     async (evt: any) => {
       const file = evt.target.files[0]
-      const toastId = toast.loading(`Adding ${file.name}`)
+      const toastId = toast.loading(`Adding ${file.name}`, {
+        duration: Infinity,
+      })
       const fileContents = await readFile(file)
       await SNI.putFile(data.current.uri, file.name, fileContents)
 
@@ -364,6 +437,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
       mutate(['readDirectory', '/'])
       toast.success(`Added ${file.name}`, {
         id: toastId,
+        duration: 4500,
       })
     },
     [data.current],
