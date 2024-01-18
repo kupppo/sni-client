@@ -86,7 +86,7 @@ export default function SiteHeader() {
   const LINKS = [
     {
       href: '/',
-      label: 'Devices',
+      label: 'Device',
     },
     {
       href: '/files',
