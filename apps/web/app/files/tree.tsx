@@ -410,9 +410,7 @@ export function Drawer({
 export default function FileTreeWrapper(): JSX.Element | null {
   const { mutate } = useSWRConfig()
   // TODO: Handle this refresh rate in the client itself
-  const { data, error, isLoading } = useSNI('connectedDevice', {
-    refreshInterval: 50,
-  })
+  const { data, error, isLoading } = useSNI('connectedDevice')
   const currentScreen = useSNI('currentScreen', {
     refreshInterval: 200,
   })

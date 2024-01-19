@@ -119,13 +119,14 @@ class SNIClient {
   connectedUri: string | null = null
   options: SNIClientOptions
   #emitter: EventEmitter
-  #healthInterval?: number | NodeJS.Timeout
+  #healthInterval: number | NodeJS.Timeout | null
 
   constructor(options: Partial<SNIClientOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options }
     this.transport = setupTransport()
     this.clients = setupClients(this.transport)
     this.#emitter = new EventEmitter()
+    this.#healthInterval = null
 
     this.#emitter.on('connected', (uri: string) => {
       this.#log(`SNI Client connected to: ${uri}`)
@@ -143,7 +144,7 @@ class SNIClient {
       await this.connectedDevice()
     } catch (err) {
       console.error(err)
-      this.#emitter.emit('disconnected')
+      this.disconnect()
     }
   }
 
@@ -176,7 +177,7 @@ class SNIClient {
         //       Technically, it has not disconnected, although the client has switched
         this.connectedUri = uri
         this.#emitter.emit('connected', uri)
-        this.#healthInterval = setInterval(() => this.#health(), this.options.healthInterval)
+        // this.#healthInterval = setInterval(() => this.#health(), this.options.healthInterval)
         return uri
       } else {
         return null
@@ -184,6 +185,13 @@ class SNIClient {
     } catch (err: unknown) {
       console.error(err)
     }
+  }
+
+  disconnect() {
+    clearInterval(this.#healthInterval as number)
+    this.#healthInterval = null
+    this.connectedUri = null
+    this.#emitter.emit('disconnected')
   }
 
   async connectedDevice() {

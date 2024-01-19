@@ -5,6 +5,7 @@ import useSWR from 'swr'
 import { useEffect, useState } from 'react'
 
 let CLIENT = new SNIClient({
+  autoConnect: false,
   verbose: true,
 })
 
@@ -33,20 +34,28 @@ const fetcher = async (key: string | string[] | null) => {
 export const useSNI = (key: string | string[], opts?: object) => {
   const [mounted, setMounted] = useState(false)
   const [clientReady, setClientReady] = useState(false)
+
   useEffect(() => {
-    setMounted(true)
-    SNI.on('connected', () => {
-      console.log('client connected')
-      setClientReady(true)
-    })
-    // on disconnect, send invalidation signal
-    SNI.on('disconnected', () => {
-      console.log('client disconnected :(')
-    })
+    const onConnect = () => setClientReady(true)
+    const onDisconnect = () => setClientReady(false)
+    SNI.on('connected', onConnect)
+    SNI.on('disconnected', onDisconnect)
+    const autoConnect = async () => {
+      await SNI.connect()
+    }
+    if (mounted) {
+      autoConnect()
+    } else {
+      setMounted(true)
+    }
+    return () => {
+      SNI.off('connected', onConnect)
+      SNI.off('disconnected', onDisconnect)
+    }
   }, [mounted])
-  const { data, ...hook } = useSWR(clientReady && mounted && key, {
-    ...opts,
-    fetcher,
-  })
+
+  const swrKey = clientReady && mounted && key
+  const { data, ...hook } = useSWR(swrKey, { ...opts, fetcher })
+
   return { ...data, ...hook }
 }
