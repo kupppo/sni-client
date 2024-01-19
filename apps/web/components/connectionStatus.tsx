@@ -28,9 +28,7 @@ const getDeviceDisplay = (sniName: string) => {
 }
 
 const ConnectionStatus = () => {
-  const { data, isLoading, error } = useSNI('connectedDevice', {
-    refreshInterval: 3000,
-  })
+  const { data, isLoading, error } = useSNI('connectedDevice')
   if (isLoading) {
     return (
       <Button variant="ghost" size="xs">

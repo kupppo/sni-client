@@ -103,13 +103,15 @@ const validatePath = (path: string) => {
 
 export type SNIClientOptions = {
   autoConnect?: boolean
-  healthInterval?: number
+  healthTimeout?: number
+  transportUrl?: string
   verbose?: boolean
 }
 
 const DEFAULT_OPTIONS = {
   autoConnect: true,
-  healthInterval: 5000,
+  healthTimeout: 5000,
+  transportUrl: 'http://localhost:8190',
   verbose: false,
 }
 
@@ -119,14 +121,12 @@ class SNIClient {
   connectedUri: string | null = null
   options: SNIClientOptions
   #emitter: EventEmitter
-  #healthInterval: number | NodeJS.Timeout | null
 
   constructor(options: Partial<SNIClientOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options }
-    this.transport = setupTransport()
+    this.transport = setupTransport(this.options.transportUrl)
     this.clients = setupClients(this.transport)
     this.#emitter = new EventEmitter()
-    this.#healthInterval = null
 
     this.#emitter.on('connected', (uri: string) => {
       this.#log(`SNI Client connected to: ${uri}`)
@@ -147,11 +147,27 @@ class SNIClient {
     return uri
   }
 
+  async #onHealth() {
+    const checkConnection = await this.connectedDevice()
+    const timeout = this.options.healthTimeout
+    const timer = new Promise((_resolve, reject) => {
+      setTimeout(() => {
+        reject('Health check timed out')
+      }, timeout)
+    })
+    return Promise.race([checkConnection, timer])
+  }
+
   async #health() {
     try {
-      await this.connectedDevice()
-    } catch (err) {
-      console.error(err)
+      const result = await this.#onHealth()
+      this.#log('SNI Client health check:', result)
+      setTimeout(() => {
+        this.#health()
+      }, 5000)
+    } catch (err: unknown) {
+      const error = err as Error
+      this.#log('SNI Client health check error:', error.message)
       this.disconnect()
     }
   }
@@ -185,7 +201,7 @@ class SNIClient {
         //       Technically, it has not disconnected, although the client has switched
         this.connectedUri = uri
         this.#emitter.emit('connected', uri)
-        this.#healthInterval = setInterval(() => this.#health(), this.options.healthInterval)
+        this.#health()
         return uri
       } else {
         return null
@@ -196,8 +212,6 @@ class SNIClient {
   }
 
   disconnect() {
-    clearInterval(this.#healthInterval as number)
-    this.#healthInterval = null
     this.connectedUri = null
     this.#emitter.emit('disconnected')
   }
@@ -206,11 +220,15 @@ class SNIClient {
     try {
       const uri = this.#getConnectedUri()
       const devices = await this.listRawDevices({ uri })
-      // TODO: If no devices are returned, this should fire a disconnected event
+      if (devices.length === 0) {
+        throw new Error('No connected device')
+      }
       const device = devices[0]
       return device
     } catch (err: unknown) {
-      console.error(err)
+      const error = err as Error
+      console.error('SNI.connectedDevice error', error)
+      throw error
     }
   }
 

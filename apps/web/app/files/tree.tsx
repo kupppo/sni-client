@@ -412,7 +412,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
   // TODO: Handle this refresh rate in the client itself
   const { data, error, isLoading } = useSNI('connectedDevice')
   const currentScreen = useSNI('currentScreen', {
-    refreshInterval: 200,
+    refreshInterval: 1000,
   })
 
   const inputRef = useRef<HTMLInputElement>(null)

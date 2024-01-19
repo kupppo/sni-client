@@ -18,6 +18,7 @@ const Value = (props: PropsWithChildren) => (
 
 export default function DeviceView(): JSX.Element {
   const { data, isLoading, error } = useSNI('connectedDevice')
+  console.log(data, error)
 
   if (isLoading) {
     return <div>Loading...</div>
