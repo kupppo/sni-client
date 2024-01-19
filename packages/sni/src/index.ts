@@ -109,7 +109,7 @@ export type SNIClientOptions = {
 
 const DEFAULT_OPTIONS = {
   autoConnect: true,
-  healthInterval: 500,
+  healthInterval: 5000,
   verbose: false,
 }
 
@@ -177,7 +177,7 @@ class SNIClient {
         //       Technically, it has not disconnected, although the client has switched
         this.connectedUri = uri
         this.#emitter.emit('connected', uri)
-        // this.#healthInterval = setInterval(() => this.#health(), this.options.healthInterval)
+        this.#healthInterval = setInterval(() => this.#health(), this.options.healthInterval)
         return uri
       } else {
         return null

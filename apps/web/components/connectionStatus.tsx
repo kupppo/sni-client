@@ -29,7 +29,7 @@ const getDeviceDisplay = (sniName: string) => {
 
 const ConnectionStatus = () => {
   const { data, isLoading, error } = useSNI('connectedDevice', {
-    refreshInterval: 50,
+    refreshInterval: 3000,
   })
   if (isLoading) {
     return (
