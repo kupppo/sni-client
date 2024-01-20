@@ -28,23 +28,24 @@ After installation, you'll need to create a client and then connect to a device.
 import SNI from '@sni/client'
 
 const client = new SNI()
+```
+
+The client will automatically connect to the first device found. This auto-connect can be disabled in the options.
+```ts
+// Connect to the first device found
+const client = new SNI({ autoConnect: false })
 await client.connect()
 ```
 
-`connect()` will automatically connect to the first device found. You can also specify a type or URI to be more specific.
+You can also specify a type or URI to be more specific.
 ```ts
-// Connect to the first device found
-await client.connect()
-
 // Connect to the first device of a specific type
 await client.connect('fxpakpro')
 
-// Connect to a specific URI
-await client.connect('fxpakpro://./dev/cu.usbmodemDEMO000000001')
+// Connect to a specific device
+const devices = await client.listDevices()
+await client.connect(devices[1].uri)
 ```
-
-### Calling the device
-x
 
 
 ## Development
