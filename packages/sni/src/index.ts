@@ -148,7 +148,7 @@ class SNIClient {
   }
 
   async #onHealth() {
-    const checkConnection = await this.connectedDevice()
+    const checkConnection = await this.getFields(['RomFileName'])
     const timeout = this.options.healthTimeout
     const timer = new Promise((_resolve, reject) => {
       setTimeout(() => {
