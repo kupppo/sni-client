@@ -24,7 +24,7 @@ export default function DeviceView(): JSX.Element {
   }
 
   if (error) {
-    return <SNIError error={data.error} />
+    return <SNIError error={error} />
   }
 
   if (data) {

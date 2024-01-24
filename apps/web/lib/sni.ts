@@ -34,19 +34,23 @@ const fetcher = async (key: string | string[] | null) => {
 const useSNIClient = () => {
   const [mounted, setMounted] = useState(false)
   const [clientReady, setClientReady] = useState(false)
+  const [error, setError] = useState(null)
   useEffect(() => {
     const onConnect = () => {
-      console.log('SNI Hook: connected')
+      // console.log('SNI Hook: connected')
       setClientReady(true)
-      // mutate(key)
     }
     const onDisconnect = () => {
-      console.log('SNI Hook: disconnected')
+      // console.log('SNI Hook: disconnected')
       setClientReady(false)
-      // mutate(key)
+    }
+    const onError = (err: any) => {
+      console.log('SNI Hook: error', err)
+      setError(err)
     }
     CLIENT.on('connected', onConnect)
     CLIENT.on('disconnected', onDisconnect)
+    CLIENT.on('error', onError)
     const autoConnect = async () => {
       await CLIENT.connect()
     }
@@ -58,19 +62,28 @@ const useSNIClient = () => {
     return () => {
       CLIENT.off('connected', onConnect)
       CLIENT.off('disconnected', onDisconnect)
+      CLIENT.off('error', onError)
     }
-  }, [mounted])
-  return useSWR(clientReady && mounted && 'SNI', {
+  }, [clientReady, mounted, setMounted, setClientReady])
+
+  const hook = useSWR(clientReady && mounted && 'SNI', {
     fetcher: () => {
       console.log('fetching SNI client', CLIENT)
       return CLIENT
     },
   })
+  return { ...hook, error: error || hook.error }
 }
 
 export const useSNI = (key: string | string[], opts?: object) => {
   const client = useSNIClient()
   const swrKey = client.data && key
   const { data, mutate, ...hook } = useSWR(swrKey, { ...opts, fetcher })
-  return { ...data, mutate, ...hook }
+  return {
+    ...data,
+    mutate,
+    ...hook,
+    isLoading: hook.isLoading || !swrKey,
+    error: client.error || hook.error,
+  }
 }

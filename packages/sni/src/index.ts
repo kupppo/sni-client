@@ -194,11 +194,19 @@ class SNIClient {
     try {
       const devices = await this.listRawDevices()
       if (devices.length > 0) {
+        // TODO: Change from first device to match the input
         const firstDevice = devices[0]
         const uri = firstDevice.uri
 
         // TODO: Should this fire a disconnected event if there is already a connectedUri?
         //       Technically, it has not disconnected, although the client has switched
+        const alreadyConnected = this.connectedUri === uri
+        if (alreadyConnected) {
+          this.#log(`Already connected to: ${uri}`)
+          this.#emitter.emit('connected', uri)
+          return uri
+        }
+
         this.connectedUri = uri
         this.#emitter.emit('connected', uri)
         this.#health()
@@ -207,7 +215,13 @@ class SNIClient {
         return null
       }
     } catch (err: unknown) {
-      console.error(err)
+      const error = err as Error
+      const noSNI = error.message.includes('Failed to fetch')
+      let msg = `Unknown Error: ${error.message}`
+      if (noSNI) {
+        msg = 'Could not connect to SNI'
+      }
+      this.#emitter.emit('error', msg)
     }
   }
 
