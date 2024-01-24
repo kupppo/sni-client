@@ -129,7 +129,7 @@ class SNIClient {
     this.#emitter = new EventEmitter()
 
     this.#emitter.on('connected', (uri: string) => {
-      this.#log(`SNI Client connected to: ${uri}`)
+      this.#log(`Connected to: ${uri}`)
     })
 
     if (this.options.autoConnect) {
@@ -148,7 +148,7 @@ class SNIClient {
   }
 
   async #onHealth() {
-    const checkConnection = await this.getFields(['RomFileName'])
+    const checkConnection = await this.getFields(['DeviceVersion'])
     const timeout = this.options.healthTimeout
     const timer = new Promise((_resolve, reject) => {
       setTimeout(() => {
@@ -160,21 +160,21 @@ class SNIClient {
 
   async #health() {
     try {
-      const result = await this.#onHealth()
-      this.#log('SNI Client health check:', result)
+      this.#log('Health check')
+      await this.#onHealth()
       setTimeout(() => {
         this.#health()
       }, 5000)
     } catch (err: unknown) {
       const error = err as Error
-      this.#log('SNI Client health check error:', error.message)
+      this.#log('Health check error:', error.message)
       this.disconnect()
     }
   }
 
   #log(...args: any[]) {
     if (this.options.verbose) {
-      console.debug(...args)
+      console.debug('%c[SNI Client]%c', 'color: rgb(120, 120, 120)', 'color: inherit', ...args)
     }
   }
 
@@ -268,14 +268,17 @@ class SNIClient {
 
   async getFields (inputFields: string[]) {
     const uri = this.#getConnectedUri()
-    const fields = inputFields.filter(
-      (field) => FIELDS[field as keyof typeof FIELDS],
-    )
+    const fields = inputFields
+      .filter(
+        (field) => FIELDS[field as keyof typeof FIELDS],
+      )
+      .map((field) => FIELDS[field as keyof typeof FIELDS])
     if (fields.length === 0) {
       throw new Error('No valid fields provided')
     }
     // TODO: Read fields from here
-    const req = SNI.FieldsRequest.create({ uri, fields: [SNI.Field.RomFileName] })
+    // @ts-ignore
+    const req = SNI.FieldsRequest.create({ uri, fields })
     const call = await this.clients.DeviceInfo.fetchFields(req)
     return call.response
   }
@@ -300,7 +303,7 @@ class SNIClient {
 
     } catch (err: unknown) {
       const error = err as Error
-      this.#log('SNI.listDevices error', error)
+      this.#log('listDevices error', error)
       throw new Error('No Connection')
     }
   }
