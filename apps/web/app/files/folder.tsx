@@ -74,7 +74,14 @@ export function AddFolderDialog({
   const { mutate } = useSWRConfig()
 
   const areInputsValid = () => {
-    return rootDir != '' && dirName != ''
+    const withSep = rootDir == '/' ? rootDir : rootDir + '/'
+    const newPath = withSep + dirName
+    return (
+      rootDir != '' &&
+      dirName != '' &&
+      !folders.includes(newPath) &&
+      !dirName.includes('/') //TODO: might need more
+    )
   }
 
   const handleSubmit = (e: any) => {
@@ -87,6 +94,7 @@ export function AddFolderDialog({
         close()
       })
       .catch(() => {
+        //TODO: Notify the user
         close()
       })
   }
@@ -171,6 +179,7 @@ export function RemoveFolderDialog({
         close()
       })
       .catch(() => {
+        //TODO: Notify the user
         close()
       })
   }
@@ -197,7 +206,13 @@ export function RemoveFolderDialog({
             <SelectContent>
               <SelectGroup>
                 {folders
-                  .filter((f) => f != '/')
+                  .filter(
+                    (f) =>
+                      f != '/' &&
+                      f != '/sd2snes' &&
+                      f != '/sd2snes/saves' &&
+                      f != '/sd2snes/cheats',
+                  )
                   .map((f) => {
                     return (
                       <SelectItem key={f} value={f}>
