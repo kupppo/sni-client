@@ -81,10 +81,14 @@ export function AddFolderDialog({
     const withSep = rootDir == '/' ? rootDir : rootDir + '/'
     const newPath = withSep + dirName
     e.preventDefault()
-    SNI.makeDirectory(uri, newPath).then(() => {
-      mutate(['readDirectory', rootDir, uri])
-    })
-    close()
+    SNI.makeDirectory(uri, newPath)
+      .then(() => {
+        mutate(['readDirectory', rootDir, uri])
+        close()
+      })
+      .catch(() => {
+        close()
+      })
   }
 
   const resetInputs = () => {
@@ -97,9 +101,9 @@ export function AddFolderDialog({
       <form onSubmit={handleSubmit}>
         <DialogHeader>
           <DialogTitle>Add Folder</DialogTitle>
-          <DialogDescription>
+          {/*<DialogDescription>
             Words, words, words, words, words, ...
-          </DialogDescription>
+          </DialogDescription>*/}
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -161,10 +165,14 @@ export function RemoveFolderDialog({
   const handleSubmit = (e: any) => {
     const rootDir = dirName.slice(0, dirName.lastIndexOf('/'))
     e.preventDefault()
-    SNI.deleteFile(uri, dirName).then(() => {
-      mutate(['readDirectory', rootDir == '' ? '/' : rootDir, uri])
-    })
-    close()
+    SNI.deleteFile(uri, dirName)
+      .then(() => {
+        mutate(['readDirectory', rootDir == '' ? '/' : rootDir, uri])
+        close()
+      })
+      .catch(() => {
+        close()
+      })
   }
 
   const resetInputs = () => setDirName('')
@@ -173,9 +181,9 @@ export function RemoveFolderDialog({
     <DialogContent onCloseAutoFocus={resetInputs}>
       <DialogHeader>
         <DialogTitle>Remove Folder</DialogTitle>
-        <DialogDescription>
+        {/*<DialogDescription>
           Words, words, words, words, words, ...
-        </DialogDescription>
+        </DialogDescription>*/}
       </DialogHeader>
       <div className="grid gap-4 py-4">
         <div className="grid grid-cols-4 items-center gap-4">
