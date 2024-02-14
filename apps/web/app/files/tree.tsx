@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useSWRConfig } from 'swr'
+import { FolderDropdown } from './folder'
 
 const Indents = ({ depth }: { depth: number }) => (
   <div className="flex ml-7">
@@ -481,6 +482,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
           >
             Add File
           </Button>
+          <FolderDropdown uri={data.current.uri} />
           {currentScreen?.data === 'game' && (
             <>
               <Button
