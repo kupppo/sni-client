@@ -94,7 +94,7 @@ export function AddFolderDialog({
         close()
       })
       .catch(() => {
-        //TODO: Notify the user
+        //TODO: Notify the user; most likely existing folder
         close()
       })
   }
@@ -179,7 +179,7 @@ export function RemoveFolderDialog({
         close()
       })
       .catch(() => {
-        //TODO: Notify the user
+        //TODO: Notify the user; most likely non-empty folder
         close()
       })
   }
