@@ -37,27 +37,34 @@ const DialogMode = {
   Remove: 2,
 }
 
+const getSubFolders = async (uri: string, dir: string): Promise<string[]> => {
+  const entries = await SNI.readDirectory(uri, dir)
+  const subfolders = entries
+    .filter((p: any) => p.type == 0)
+    .map((p: any) => p.path)
+  for (let i = subfolders.length - 1; i >= 0; i--) {
+    const temp = await getSubFolders(uri, subfolders[i])
+    temp.forEach((p: any) => subfolders.push(p))
+  }
+  return subfolders
+}
+
 export function AddFolderDialog({
   uri,
+  folders,
   close,
 }: {
   uri: string
+  folders: string[]
   close: () => void
 }) {
   const [rootDir, setRootDir] = useState<string>('/')
   const [dirName, setDirName] = useState<string>('')
   const { mutate } = useSWRConfig()
 
-  //TODO: Populate combo box with all folders
-
-  //TODO: reset the values every time the dialog is shown
-  useEffect(() => {
-    setRootDir('/')
-    setDirName('')
-  }, [])
-
   const handleSubmit = (e: any) => {
-    const newPath = rootDir + dirName
+    const withSep = rootDir == '/' ? rootDir : rootDir + '/'
+    const newPath = withSep + dirName
     e.preventDefault()
     SNI.makeDirectory(uri, newPath).then(() => {
       mutate(['readDirectory', rootDir, uri])
@@ -87,7 +94,13 @@ export function AddFolderDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="/">/</SelectItem>
+                  {folders.map((f) => {
+                    return (
+                      <SelectItem key={f} value={f}>
+                        {f}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -115,37 +128,23 @@ export function AddFolderDialog({
 
 export function RemoveFolderDialog({
   uri,
+  folders,
   close,
 }: {
   uri: string
+  folders: string[]
   close: () => void
 }) {
-  const [rootDir, setRootDir] = useState<string>('/')
   const [dirName, setDirName] = useState<string>('')
-  const [folders, setFolders] = useState<string[]>([])
   const { mutate } = useSWRConfig()
 
-  const updateRoot = (dir: string) => {
-    setRootDir(dir)
-    SNI.readDirectory(uri, dir).then((v: any[]) => {
-      console.log(v)
-      setFolders(v.filter((p: any) => p.type == 0).map((p: any) => p.name))
-    })
-  }
-
-  useEffect(() => {
-    updateRoot('/')
-  }, [])
-
   const handleSubmit = (e: any) => {
-    const thePath = rootDir + dirName
+    const rootDir = dirName.slice(dirName.lastIndexOf('/'))
     e.preventDefault()
-    SNI.deleteFile(uri, thePath).then(() => {
+    SNI.deleteFile(uri, dirName).then(() => {
       mutate(['readDirectory', rootDir, uri])
     })
     close()
-    setRootDir('/')
-    setDirName('')
   }
 
   return (
@@ -160,22 +159,7 @@ export function RemoveFolderDialog({
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="rootDir" className="text-right">
-              Parent
-            </Label>
-            <Select name="rootDir" onValueChange={updateRoot}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select root folder" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="/">/</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="dirName" className="text-right">
-              Parent
+              Folder
             </Label>
             <Select name="dirName" onValueChange={setDirName}>
               <SelectTrigger className="w-[180px]">
@@ -183,13 +167,15 @@ export function RemoveFolderDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {folders.map((f) => {
-                    return (
-                      <SelectItem key={f} value={f}>
-                        {f}
-                      </SelectItem>
-                    )
-                  })}
+                  {folders
+                    .filter((f) => f != '/')
+                    .map((f) => {
+                      return (
+                        <SelectItem key={f} value={f}>
+                          {f}
+                        </SelectItem>
+                      )
+                    })}
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -207,6 +193,25 @@ export function RemoveFolderDialog({
 export function FolderDropdown({ uri }: { uri: string }) {
   const [mode, setMode] = useState(DialogMode.None)
   const [open, setOpen] = useState(false)
+  const [folders, setFolders] = useState<string[]>([])
+
+  const refreshFolders = () => {
+    getSubFolders(uri, '/').then((v) => {
+      const temp: string[] = ['/']
+      v.forEach((p: any) => temp.push(p))
+      setFolders(temp.sort())
+    })
+  }
+
+  useEffect(() => {
+    refreshFolders()
+  }, [])
+
+  const onClose = () => {
+    refreshFolders()
+    setOpen(false)
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DropdownMenu>
@@ -237,10 +242,10 @@ export function FolderDropdown({ uri }: { uri: string }) {
         </DropdownMenuContent>
       </DropdownMenu>
       {mode == DialogMode.Add && (
-        <AddFolderDialog uri={uri} close={() => setOpen(false)} />
+        <AddFolderDialog uri={uri} folders={folders} close={onClose} />
       )}
       {mode == DialogMode.Remove && (
-        <RemoveFolderDialog uri={uri} close={() => setOpen(false)} />
+        <RemoveFolderDialog uri={uri} folders={folders} close={onClose} />
       )}
     </Dialog>
   )
