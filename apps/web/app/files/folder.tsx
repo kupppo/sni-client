@@ -1,6 +1,17 @@
 'use client'
 
 import { SNI } from '@/lib/sni'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -62,6 +73,10 @@ export function AddFolderDialog({
   const [dirName, setDirName] = useState<string>('')
   const { mutate } = useSWRConfig()
 
+  const areInputsValid = () => {
+    return rootDir != '' && dirName != ''
+  }
+
   const handleSubmit = (e: any) => {
     const withSep = rootDir == '/' ? rootDir : rootDir + '/'
     const newPath = withSep + dirName
@@ -70,12 +85,15 @@ export function AddFolderDialog({
       mutate(['readDirectory', rootDir, uri])
     })
     close()
+  }
+
+  const resetInputs = () => {
     setRootDir('/')
     setDirName('')
   }
 
   return (
-    <DialogContent className="sm:max-w-[425px]">
+    <DialogContent className="sm:max-w-[425px]" onCloseAutoFocus={resetInputs}>
       <form onSubmit={handleSubmit}>
         <DialogHeader>
           <DialogTitle>Add Folder</DialogTitle>
@@ -119,7 +137,9 @@ export function AddFolderDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit">Confirm</Button>
+          <Button type="submit" disabled={!areInputsValid()}>
+            Confirm
+          </Button>
         </DialogFooter>
       </form>
     </DialogContent>
@@ -139,53 +159,71 @@ export function RemoveFolderDialog({
   const { mutate } = useSWRConfig()
 
   const handleSubmit = (e: any) => {
-    const rootDir = dirName.slice(dirName.lastIndexOf('/'))
+    const rootDir = dirName.slice(0, dirName.lastIndexOf('/'))
     e.preventDefault()
     SNI.deleteFile(uri, dirName).then(() => {
-      mutate(['readDirectory', rootDir, uri])
+      mutate(['readDirectory', rootDir == '' ? '/' : rootDir, uri])
     })
     close()
   }
 
+  const resetInputs = () => setDirName('')
+
   return (
-    <DialogContent>
-      <form onSubmit={handleSubmit}>
-        <DialogHeader>
-          <DialogTitle>Remove Folder</DialogTitle>
-          <DialogDescription>
-            Words, words, words, words, words, ...
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="rootDir" className="text-right">
-              Folder
-            </Label>
-            <Select name="dirName" onValueChange={setDirName}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select a folder" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {folders
-                    .filter((f) => f != '/')
-                    .map((f) => {
-                      return (
-                        <SelectItem key={f} value={f}>
-                          {f}
-                        </SelectItem>
-                      )
-                    })}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
+    <DialogContent onCloseAutoFocus={resetInputs}>
+      <DialogHeader>
+        <DialogTitle>Remove Folder</DialogTitle>
+        <DialogDescription>
+          Words, words, words, words, words, ...
+        </DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-4">
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="rootDir" className="text-right">
+            Folder
+          </Label>
+          <Select name="dirName" onValueChange={setDirName}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select a folder" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {folders
+                  .filter((f) => f != '/')
+                  .map((f) => {
+                    return (
+                      <SelectItem key={f} value={f}>
+                        {f}
+                      </SelectItem>
+                    )
+                  })}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
-        <DialogFooter>
-          {/*TODO: Add alert to double check*/}
-          <Button type="submit">Confirm</Button>
-        </DialogFooter>
-      </form>
+      </div>
+      <DialogFooter>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button disabled={dirName == ''}>Remove</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <form onSubmit={handleSubmit}>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the
+                  selected folder: {dirName}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction type="submit">Continue</AlertDialogAction>
+              </AlertDialogFooter>
+            </form>
+          </AlertDialogContent>
+        </AlertDialog>
+      </DialogFooter>
     </DialogContent>
   )
 }
