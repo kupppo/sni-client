@@ -235,8 +235,10 @@ export function RemoveFolderDialog({
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the
-                  selected folder: {dirName}
+                  This action cannot be undone. This will permanently delete:
+                  <div className="py-2">
+                    <code>{dirName}</code>
+                  </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
