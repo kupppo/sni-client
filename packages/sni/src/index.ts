@@ -178,6 +178,16 @@ class SNIClient {
     }
   }
 
+  async makeDirectory (uri: string, path: string) {
+    if (path.length === 0) {
+      throw new Error('Invalid path')
+    }
+
+    const req = SNI.MakeDirectoryRequest.create({ uri, path })
+    await this.clients.DeviceFilesystem.makeDirectory(req)
+    return path
+  }
+
   async putFile (uri: string, path: string, fileContents: Uint8Array) {
     if (path.length === 0) {
       throw new Error('Invalid path')
