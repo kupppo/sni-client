@@ -48,6 +48,25 @@ const DialogMode = {
   Remove: 2,
 }
 
+const deleteFolder = async (uri: string, dir: string): Promise<string> => {
+  const parentDir = dir.slice(0, dir.lastIndexOf('/'))
+  const entries = await SNI.readDirectory(uri, dir)
+  for (let i = 0; i < entries.length; i++) {
+    const temp = entries[i]
+    if (temp.type == 0) {
+      await deleteFolder(uri, temp.path)
+    } else {
+      await SNI.deleteFile(uri, temp.path)
+    }
+  }
+  try {
+    await SNI.deleteFile(uri, dir)
+  } catch (error) {
+    console.log(error)
+  }
+  return parentDir
+}
+
 const getSubFolders = async (uri: string, dir: string): Promise<string[]> => {
   const entries = await SNI.readDirectory(uri, dir)
   const subfolders = entries
@@ -171,10 +190,9 @@ export function RemoveFolderDialog({
   const { mutate } = useSWRConfig()
 
   const handleSubmit = (e: any) => {
-    const rootDir = dirName.slice(0, dirName.lastIndexOf('/'))
     e.preventDefault()
-    SNI.deleteFile(uri, dirName)
-      .then(() => {
+    deleteFolder(uri, dirName)
+      .then((rootDir: string) => {
         mutate(['readDirectory', rootDir == '' ? '/' : rootDir, uri])
         close()
       })
