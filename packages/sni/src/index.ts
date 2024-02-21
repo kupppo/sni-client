@@ -209,6 +209,12 @@ class SNIClient {
     return folders.concat(files)
   }
 
+  async renameFile (uri: string, path: string, newFilename: string) {
+    const req = SNI.RenameFileRequest.create({ uri, path, newFilename })
+    await this.clients.DeviceFilesystem.renameFile(req)
+    return newFilename
+  }
+
   async resetSystem(uri: string) {
     const req = SNI.ResetSystemRequest.create({ uri })
     const call = await this.clients.DeviceControl.resetSystem(req)
