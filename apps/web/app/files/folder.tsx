@@ -69,6 +69,9 @@ const deleteFolder = async (uri: string, dir: string): Promise<string> => {
 
 const getSubFolders = async (uri: string, dir: string): Promise<string[]> => {
   const entries = await SNI.readDirectory(uri, dir)
+  if (!entries) {
+    return []
+  }
   const subfolders = entries
     .filter((p: any) => p.type == 0)
     .map((p: any) => p.path)
