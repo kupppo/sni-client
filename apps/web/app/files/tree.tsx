@@ -221,7 +221,7 @@ function FileTree({
     console.error(error)
   }
 
-  if (isLoading) {
+  if (isLoading || !data) {
     return <div />
   }
 
