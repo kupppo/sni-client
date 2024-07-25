@@ -178,6 +178,16 @@ class SNIClient {
     }
   }
 
+  async makeDirectory (uri: string, path: string) {
+    if (path.length === 0) {
+      throw new Error('Invalid path')
+    }
+
+    const req = SNI.MakeDirectoryRequest.create({ uri, path })
+    await this.clients.DeviceFilesystem.makeDirectory(req)
+    return path
+  }
+
   async putFile (uri: string, path: string, fileContents: Uint8Array) {
     if (path.length === 0) {
       throw new Error('Invalid path')
@@ -197,6 +207,12 @@ class SNIClient {
     const folders = getFolders(rawFolders, path)
     const files = getFiles(rawFiles, path)
     return folders.concat(files)
+  }
+
+  async renameFile (uri: string, path: string, newFilename: string) {
+    const req = SNI.RenameFileRequest.create({ uri, path, newFilename })
+    await this.clients.DeviceFilesystem.renameFile(req)
+    return newFilename
   }
 
   async resetSystem(uri: string) {
