@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { SNI } from '@/lib/sni'
 import { toast } from 'sonner'
-import { PropsWithChildren } from 'react'
+import { PropsWithChildren, type JSX } from 'react';
 
 const Label = (props: PropsWithChildren) => (
   <span className="font-bold block w-32">{props.children}</span>

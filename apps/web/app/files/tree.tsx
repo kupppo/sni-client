@@ -10,7 +10,7 @@ import {
   X as CloseIcon,
 } from 'lucide-react'
 import SNIError from '@/components/sniError'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import { MouseEvent } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { cn } from '@/lib/utils'
