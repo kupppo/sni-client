@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 export default function SNIError({ error }: { error: Error }): JSX.Element {
   if (error.message.includes('Missing Filesystem Capabilities')) {
     return <div>Missing Filesystem Capabilities</div>

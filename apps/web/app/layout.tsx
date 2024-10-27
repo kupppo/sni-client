@@ -8,6 +8,8 @@ import { cn } from '../lib/utils'
 import Header from '@/components/header'
 import { Analytics } from '@vercel/analytics/react'
 
+import type { JSX } from "react";
+
 export const metadata: Metadata = {
   title: 'SNI Web Client',
   description: 'A web interface for SNI',
