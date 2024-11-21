@@ -48,82 +48,90 @@ export default function DeviceView(): JSX.Element {
               <Label>URI</Label>
               <Value>{data.current.uri}</Value>
             </div>
-            {data.current.capabilities.length > 0 && (
-              <div className="flex mb-2">
-                <Label>Capabilities</Label>
-                <ul className="list-none">
-                  {data.current.capabilities.map((capability: string) => (
-                    <li key={capability}>
-                      <Value>{capability}</Value>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {data.current &&
+              data.current.capabilities &&
+              data.current.capabilities.length > 0 && (
+                <div className="flex mb-2">
+                  <Label>Capabilities</Label>
+                  <ul className="list-none">
+                    {data.current.capabilities.map((capability: string) => (
+                      <li key={capability}>
+                        <Value>{capability}</Value>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
           </div>
           <div>
-            {data.current.capabilities.includes('ResetSystem') && (
-              <div className="mb-4">
-                <Button
-                  variant="default"
-                  onClick={async (evt) => {
-                    try {
-                      evt.preventDefault()
-                      await SNI.resetSystem(data.current.uri)
-                    } catch (err) {
-                      const error = err as Error
-                      const notConfigured = error.message.includes(
-                        'device not configured',
-                      )
-                      if (notConfigured) {
-                        toast.error('Device is not configured', {
-                          description: 'Please try again shortly',
-                        })
-                      } else {
-                        console.error(error)
-                        toast.error('Failed to reset system')
+            {data.current &&
+              data.current.capabilities &&
+              data.current.capabilities.includes('ResetSystem') && (
+                <div className="mb-4">
+                  <Button
+                    variant="default"
+                    onClick={async (evt) => {
+                      try {
+                        evt.preventDefault()
+                        await SNI.resetSystem(data.current.uri)
+                      } catch (err) {
+                        const error = err as Error
+                        const notConfigured = error.message.includes(
+                          'device not configured',
+                        )
+                        if (notConfigured) {
+                          toast.error('Device is not configured', {
+                            description: 'Please try again shortly',
+                          })
+                        } else {
+                          console.error(error)
+                          toast.error('Failed to reset system')
+                        }
                       }
-                    }
-                  }}
-                >
-                  Reset System
-                </Button>
-              </div>
-            )}
-            {data.current.capabilities.includes('ResetToMenu') && (
-              <div className="mb-4">
-                <Button
-                  variant="outline"
-                  onClick={async (evt) => {
-                    try {
-                      evt.preventDefault()
-                      await SNI.resetToMenu(data.current.uri)
-                    } catch (err) {
-                      const error = err as Error
-                      const notConfigured = error.message.includes(
-                        'device not configured',
-                      )
-                      if (notConfigured) {
-                        toast.error('Device is not configured', {
-                          description: 'Please try again shortly',
-                        })
-                      } else {
-                        console.error(error)
-                        toast.error('Failed to reset to menu')
+                    }}
+                  >
+                    Reset System
+                  </Button>
+                </div>
+              )}
+            {data.current &&
+              data.current.capabilities &&
+              data.current.capabilities.includes('ResetToMenu') && (
+                <div className="mb-4">
+                  <Button
+                    variant="outline"
+                    onClick={async (evt) => {
+                      try {
+                        evt.preventDefault()
+                        await SNI.resetToMenu(data.current.uri)
+                      } catch (err) {
+                        const error = err as Error
+                        const notConfigured = error.message.includes(
+                          'device not configured',
+                        )
+                        if (notConfigured) {
+                          toast.error('Device is not configured', {
+                            description: 'Please try again shortly',
+                          })
+                        } else {
+                          console.error(error)
+                          toast.error('Failed to reset to menu')
+                        }
                       }
-                    }
-                  }}
-                >
-                  Reset to Menu
-                </Button>
-              </div>
-            )}
+                    }}
+                  >
+                    Reset to Menu
+                  </Button>
+                </div>
+              )}
             <div>
               <Button
                 variant="outline"
                 onClick={async (evt) => {
                   evt.preventDefault()
-                  const currentField = await SNI.getFields(data.current.uri, ['RomFileName'])
+                  const currentField = await SNI.getFields(data.current.uri, [
+                    'RomFileName',
+                  ])
                   const value = currentField.values[0]
                   toast(`Current file: ${value}`)
                 }}
