@@ -18,7 +18,8 @@
     "proto": "protoc --ts_out ./src/lib/proto --proto_path ./src/protos ./src/protos/*.proto"
   },
   "dependencies": {
-    "@protobuf-ts/grpcweb-transport": "^2.9.3"
+    "@protobuf-ts/grpcweb-transport": "^2.9.3",
+    "eventemitter3": "^5.0.1"
   },
   "devDependencies": {
     "@protobuf-ts/plugin": "^2.9.3",

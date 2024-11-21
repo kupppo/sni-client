@@ -17,18 +17,17 @@ const Value = (props: PropsWithChildren) => (
 )
 
 export default function DeviceView(): JSX.Element {
-  const data = useSNI('devices', { refreshInterval: 50 })
-  const connected = data?.connected
+  const { data, isLoading, error } = useSNI('connectedDevice')
 
-  if (data.isLoading) {
+  if (isLoading) {
     return <div>Loading...</div>
   }
 
-  if (data.error) {
+  if (error) {
     return <SNIError error={data.error} />
   }
 
-  if (connected) {
+  if (data) {
     return (
       <div>
         <div className="-ml-2 mb-4">
@@ -38,21 +37,21 @@ export default function DeviceView(): JSX.Element {
           <div>
             <div className="flex mb-2">
               <Label>Name</Label>
-              <Value>{data.current.displayName}</Value>
+              <Value>{data.displayName}</Value>
             </div>
             <div className="flex mb-2">
               <Label>Kind</Label>
-              <Value>{data.current.kind}</Value>
+              <Value>{data.kind}</Value>
             </div>
             <div className="flex mb-2">
               <Label>URI</Label>
-              <Value>{data.current.uri}</Value>
+              <Value>{data.uri}</Value>
             </div>
-            {data.current.capabilities.length > 0 && (
+            {data.capabilities.length > 0 && (
               <div className="flex mb-2">
                 <Label>Capabilities</Label>
                 <ul className="list-none">
-                  {data.current.capabilities.map((capability: string) => (
+                  {data.capabilities.map((capability: string) => (
                     <li key={capability}>
                       <Value>{capability}</Value>
                     </li>
@@ -62,14 +61,14 @@ export default function DeviceView(): JSX.Element {
             )}
           </div>
           <div>
-            {data.current.capabilities.includes('ResetSystem') && (
+            {data.capabilities.includes('ResetSystem') && (
               <div className="mb-4">
                 <Button
                   variant="default"
                   onClick={async (evt) => {
                     try {
                       evt.preventDefault()
-                      await SNI.resetSystem(data.current.uri)
+                      await SNI.resetSystem()
                     } catch (err) {
                       const error = err as Error
                       const notConfigured = error.message.includes(
@@ -90,14 +89,14 @@ export default function DeviceView(): JSX.Element {
                 </Button>
               </div>
             )}
-            {data.current.capabilities.includes('ResetToMenu') && (
+            {data.capabilities.includes('ResetToMenu') && (
               <div className="mb-4">
                 <Button
                   variant="outline"
                   onClick={async (evt) => {
                     try {
                       evt.preventDefault()
-                      await SNI.resetToMenu(data.current.uri)
+                      await SNI.resetToMenu()
                     } catch (err) {
                       const error = err as Error
                       const notConfigured = error.message.includes(
@@ -123,7 +122,7 @@ export default function DeviceView(): JSX.Element {
                 variant="outline"
                 onClick={async (evt) => {
                   evt.preventDefault()
-                  const currentField = await SNI.getFields(data.current.uri, ['RomFileName'])
+                  const currentField = await SNI.getFields(['RomFileName'])
                   const value = currentField.values[0]
                   toast(`Current file: ${value}`)
                 }}

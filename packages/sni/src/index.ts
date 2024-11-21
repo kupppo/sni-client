@@ -1,4 +1,5 @@
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
+import EventEmitter from 'eventemitter3'
 import { SNI, Clients } from './lib'
 
 export type DeviceKind = 'fxpakpro' | 'luabridge' | 'retroarch'
@@ -100,24 +101,128 @@ const validatePath = (path: string) => {
   }
 }
 
+export type SNIClientOptions = {
+  autoConnect?: boolean
+  healthInterval?: number
+  verbose?: boolean
+}
+
+const DEFAULT_OPTIONS = {
+  autoConnect: true,
+  healthInterval: 5000,
+  verbose: false,
+}
+
 class SNIClient {
   transport: GrpcWebFetchTransport
   clients: any
+  connectedUri: string | null = null
+  options: SNIClientOptions
+  #emitter: EventEmitter
+  #healthInterval: number | NodeJS.Timeout | null
 
-  constructor() {
+  constructor(options: Partial<SNIClientOptions> = {}) {
+    this.options = { ...DEFAULT_OPTIONS, ...options }
     this.transport = setupTransport()
     this.clients = setupClients(this.transport)
+    this.#emitter = new EventEmitter()
+    this.#healthInterval = null
+
+    this.#emitter.on('connected', (uri: string) => {
+      this.#log(`SNI Client connected to: ${uri}`)
+    })
+
+    if (this.options.autoConnect) {
+      this.connect()
+    }
 
     return this
   }
 
-  async currentScreen (uri: string) {
+  #getConnectedUri() {
+    const uri = this.connectedUri
+    if (!uri) {
+      throw new Error('No connected device')
+    }
+    return uri
+  }
+
+  async #health() {
     try {
-      const req = await this.getFields(uri, ['RomFileName'])
-      if (req.values[0] !== '/sd2snes/m3nu.bin') {
-        return 'game'
+      await this.connectedDevice()
+    } catch (err) {
+      console.error(err)
+      this.disconnect()
+    }
+  }
+
+  #log(...args: any[]) {
+    if (this.options.verbose) {
+      console.debug(...args)
+    }
+  }
+
+  off(eventName: string, listener: (...args: any[]) => void) {
+    this.#emitter.off(eventName, listener)
+  }
+
+  on(eventName: string, listener: (...args: any[]) => void) {
+    this.#emitter.on(eventName, listener)
+  }
+
+  once(eventName: string, listener: (...args: any[]) => void) {
+    this.#emitter.once(eventName, listener)
+  }
+
+  async connect(input?: DeviceKind | string | null) {
+    try {
+      const devices = await this.listRawDevices()
+      if (devices.length > 0) {
+        const firstDevice = devices[0]
+        const uri = firstDevice.uri
+
+        // TODO: Should this fire a disconnected event if there is already a connectedUri?
+        //       Technically, it has not disconnected, although the client has switched
+        this.connectedUri = uri
+        this.#emitter.emit('connected', uri)
+        this.#healthInterval = setInterval(() => this.#health(), this.options.healthInterval)
+        return uri
+      } else {
+        return null
       }
-      return 'menu'
+    } catch (err: unknown) {
+      console.error(err)
+    }
+  }
+
+  disconnect() {
+    clearInterval(this.#healthInterval as number)
+    this.#healthInterval = null
+    this.connectedUri = null
+    this.#emitter.emit('disconnected')
+  }
+
+  async connectedDevice() {
+    try {
+      const uri = this.#getConnectedUri()
+      const devices = await this.listRawDevices({ uri })
+      // TODO: If no devices are returned, this should fire a disconnected event
+      const device = devices[0]
+      return device
+    } catch (err: unknown) {
+      console.error(err)
+    }
+  }
+
+  async currentScreen () {
+    try {
+      const req = await this.getFields(['RomFileName'])
+      // the FxPak Pro will either use menu.bin or m3nu.bin
+      // and a game will normally end with .sfc or .smc
+      if (req.values[0].endsWith('.bin')) {
+        return 'menu'
+      }
+      return 'game'
     } catch (err: unknown) {
       const error = err as Error
       console.error('currentScreen', error.message)
@@ -125,23 +230,26 @@ class SNIClient {
     }
   }
 
-  async bootFile (uri: string, path: string) {
+  async bootFile (path: string) {
     validatePath(path)
+    const uri = this.#getConnectedUri()
   
     const req = SNI.BootFileRequest.create({ uri, path })
     await this.clients.DeviceFilesystem.bootFile(req)
     return path
   }
   
-  async deleteFile (uri: string, path: string) {
+  async deleteFile (path: string) {
     validatePath(path)
+    const uri = this.#getConnectedUri()
   
     const req = SNI.RemoveFileRequest.create({ uri, path })
     await this.clients.DeviceFilesystem.removeFile(req)
     return path
   }
 
-  async getFields (uri: string, inputFields: string[]) {
+  async getFields (inputFields: string[]) {
+    const uri = this.#getConnectedUri()
     const fields = inputFields.filter(
       (field) => FIELDS[field as keyof typeof FIELDS],
     )
@@ -154,6 +262,7 @@ class SNIClient {
     return call.response
   }
 
+  // TODO: Refactor this to align with SNI's own `listDevices`
   async listDevices(kinds?: string[]) {
     try {
       const req = SNI.DevicesRequest.create({ kinds })
@@ -167,28 +276,39 @@ class SNIClient {
       return {
         connected: devices.length > 0,
         devices,
-        // TODO: Make this configurable and rememberable
+        // TODO: Remove this
         current: devices[0],
       }
 
     } catch (err: unknown) {
       const error = err as Error
-      console.debug('SNI.listDevices error', error)
+      this.#log('SNI.listDevices error', error)
       throw new Error('No Connection')
     }
   }
 
-  async putFile (uri: string, path: string, fileContents: Uint8Array) {
-    if (path.length === 0) {
-      throw new Error('Invalid path')
-    }
+  async listRawDevices(args?: { kinds?: DeviceKind[], uri?: string }) {
+    const req = SNI.DevicesRequest.create(args)
+    const devicesCall = await this.clients.Devices.listDevices(req)
+    const devices: any[] = devicesCall.response.devices.map((device: any) => {
+      const rawCapabilities = device.capabilities
+      const capabilities = mapCapabilities(device.capabilities)
+      return { ...device, capabilities, rawCapabilities }
+    })
+    return devices
+  }
+
+  async putFile (path: string, fileContents: Uint8Array) {
+    validatePath(path)
+    const uri = this.#getConnectedUri()
   
     const req = SNI.PutFileRequest.create({ uri, path, data: fileContents })
     await this.clients.DeviceFilesystem.putFile(req)
     return path
   }
 
-  async readDirectory (uri: string, path: string) {
+  async readDirectory (path: string) {
+    const uri = this.#getConnectedUri()
     const req = SNI.ReadDirectoryRequest.create({ path, uri })
     const call = await this.clients.DeviceFilesystem.readDirectory(req)
     const data = call.response.entries
@@ -199,13 +319,15 @@ class SNIClient {
     return folders.concat(files)
   }
 
-  async resetSystem(uri: string) {
+  async resetSystem() {
+    const uri = this.#getConnectedUri()
     const req = SNI.ResetSystemRequest.create({ uri })
     const call = await this.clients.DeviceControl.resetSystem(req)
     return call.response
   }
 
-  async resetToMenu (uri: string) {
+  async resetToMenu () {
+    const uri = this.#getConnectedUri()
     const req = SNI.ResetToMenuRequest.create({ uri })
     const call = await this.clients.DeviceControl.resetToMenu(req)
     return call.response
