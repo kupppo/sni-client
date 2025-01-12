@@ -188,15 +188,27 @@ class SNIClient {
     return path
   }
 
-  async readDirectory (uri: string, path: string) {
-    const req = SNI.ReadDirectoryRequest.create({ path, uri })
-    const call = await this.clients.DeviceFilesystem.readDirectory(req)
-    const data = call.response.entries
-    const rawFiles = data.filter((entry: any) => entry.type === 1)
-    const rawFolders = data.filter((entry: any) => entry.type === 0)
-    const folders = getFolders(rawFolders, path)
-    const files = getFiles(rawFiles, path)
-    return folders.concat(files)
+  async readDirectory (uri: string, path: string, retryCount: number = 0): Promise<any> {
+    const self = this
+    try {
+      const req = SNI.ReadDirectoryRequest.create({ path, uri })
+      const call = await this.clients.DeviceFilesystem.readDirectory(req)
+      const data = call.response.entries
+      const rawFiles = data.filter((entry: any) => entry.type === 1)
+      const rawFolders = data.filter((entry: any) => entry.type === 0)
+      const folders = getFolders(rawFolders, path)
+      const files = getFiles(rawFiles, path)
+      return folders.concat(files)
+    } catch (err: unknown) {
+      const error = err as Error
+      // The error `fxpakpro: device not configured` is thrown when the device is not ready
+      // Retry the request up to 3 times then throw an error
+      const fxpakproNotReady = error.message === 'fxpakpro: device not configured'
+      if (fxpakproNotReady && retryCount < 3) {
+        return self.readDirectory(uri, path, retryCount + 1)
+      }
+      throw new Error('Could not read directory')
+    }
   }
 
   async resetSystem(uri: string) {
