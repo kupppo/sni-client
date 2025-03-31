@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useSWRConfig } from 'swr'
+import { FolderDropdown } from './folder'
 
 const Indents = ({ depth }: { depth: number }) => (
   <div className="flex ml-7">
@@ -390,6 +391,10 @@ export function Drawer({
                   evt.preventDefault()
                   if (confirmDelete) {
                     const toastId = toast.loading(`Deleting file`)
+                    const rootDir = currentFile.slice(
+                      0,
+                      currentFile.lastIndexOf('/'),
+                    )
                     await SNI.deleteFile(uri, currentFile)
                     toast.success(`Deleted file`, {
                       id: toastId,
@@ -397,7 +402,7 @@ export function Drawer({
                     })
                     setCurrentFile(null)
                     // revalidate directory of the removed file
-                    mutate(['readDirectory', '/', uri])
+                    mutate(['readDirectory', rootDir, uri])
                     setConfirmDelete(false)
                   } else {
                     setConfirmDelete(true)
@@ -481,6 +486,7 @@ export default function FileTreeWrapper(): JSX.Element | null {
           >
             Add File
           </Button>
+          <FolderDropdown uri={data.current.uri} />
           {currentScreen?.data === 'game' && (
             <>
               <Button
