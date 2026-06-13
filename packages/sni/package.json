@@ -13,7 +13,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "npm run proto && tsup src/index.ts --format cjs,esm --dts",
+    "build": "tsup src/index.ts --format cjs,esm --dts",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "proto": "protoc --ts_out ./src/lib/proto --proto_path ./src/protos ./src/protos/*.proto"
   },
