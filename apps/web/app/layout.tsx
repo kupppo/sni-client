@@ -1,22 +1,22 @@
-import "./globals.css";
-import { Analytics } from "@vercel/analytics/react";
-import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
-import type { Metadata } from "next";
-import { Toaster } from "sonner";
-import Header from "@/components/header";
-import { ThemeProvider } from "@/components/ui/theme-provider";
-import { cn } from "../lib/utils";
+import './globals.css'
+import { Analytics } from '@vercel/analytics/react'
+import { GeistMono } from 'geist/font/mono'
+import { GeistSans } from 'geist/font/sans'
+import type { Metadata } from 'next'
+import { Toaster } from 'sonner'
+import Header from '@/components/header'
+import { ThemeProvider } from '@/components/ui/theme-provider'
+import { cn } from '../lib/utils'
 
 export const metadata: Metadata = {
-  title: "SNI Web Client",
-  description: "A web interface for SNI",
-};
+  title: 'SNI Web Client',
+  description: 'A web interface for SNI',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }): JSX.Element {
   return (
     <html
@@ -24,7 +24,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
     >
-      <body className={cn("min-h-screen bg-background antialiased")}>
+      <body className={cn('min-h-screen bg-background antialiased')}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -38,5 +38,5 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
-  );
+  )
 }

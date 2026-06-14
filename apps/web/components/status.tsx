@@ -1,12 +1,12 @@
-"use client";
+'use client'
 
-import { cva, type VariantProps } from "class-variance-authority";
-import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
-import styles from "./status.module.css";
+import { cva, type VariantProps } from 'class-variance-authority'
+import { useEffect, useState } from 'react'
+import { cn } from '@/lib/utils'
+import styles from './status.module.css'
 
 export interface StatusProps extends VariantProps<typeof dotVariants> {
-  label?: string;
+  label?: string
 }
 
 const dotVariants = cva(styles.base, {
@@ -22,20 +22,20 @@ const dotVariants = cva(styles.base, {
       pending: styles.pending,
     },
   },
-});
+})
 
 const Status = ({ label, status, size }: StatusProps) => {
-  const [loading, setLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
   useEffect(() => {
-    setLoading(true);
+    setLoading(true)
     setTimeout(() => {
-      setLoading(false);
-    }, 100);
-  }, [label]);
+      setLoading(false)
+    }, 100)
+  }, [label])
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setMounted(true)
+  }, [])
   return (
     <div
       className={cn(
@@ -51,7 +51,7 @@ const Status = ({ label, status, size }: StatusProps) => {
         </span>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default Status;
+export default Status
