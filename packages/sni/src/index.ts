@@ -1,18 +1,23 @@
-import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
-import { SNI, Clients } from './lib'
+import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport";
+import { Clients, SNI } from "./lib";
 
-export type DeviceKind = 'fxpakpro' | 'luabridge' | 'retroarch'
+export type DeviceKind = "fxpakpro" | "luabridge" | "retroarch";
 
-function setupTransport(baseUrl: string = 'http://localhost:8190') {
-  return new GrpcWebFetchTransport({ baseUrl })
+function setupTransport(baseUrl = "http://localhost:8190") {
+  return new GrpcWebFetchTransport({ baseUrl });
 }
 
 function setupClients(transport: GrpcWebFetchTransport) {
-  return Object.keys(Clients).reduce((acc, key) => {
-    const clientKey = key.replace('Client', '')
-    acc[clientKey as string] = new Clients[key as keyof typeof Clients](transport)
-    return acc
-  }, {} as Record<string, any>)
+  return Object.keys(Clients).reduce(
+    (acc, key) => {
+      const clientKey = key.replace("Client", "");
+      acc[clientKey as string] = new Clients[key as keyof typeof Clients](
+        transport
+      );
+      return acc;
+    },
+    {} as Record<string, any>
+  );
 }
 
 const CAPABILITIES = {
@@ -33,195 +38,196 @@ const CAPABILITIES = {
   GetFile: 15,
   BootFile: 16,
   NWACommand: 20,
-}
+};
 
 const mapCapabilities = (input: number[]) =>
-  input.map((capability) => {
-    return Object.keys(CAPABILITIES).find(
-      (key) => CAPABILITIES[key as keyof typeof CAPABILITIES] === capability,
+  input.map((capability) =>
+    Object.keys(CAPABILITIES).find(
+      (key) => CAPABILITIES[key as keyof typeof CAPABILITIES] === capability
     )
-  })
+  );
 
 const fetchFields = () => {
-  const clone = { ...SNI.Field }
+  const clone = { ...SNI.Field };
   // remove all keys that are numbers
   Object.keys(clone).forEach((key: string | number) => {
     if (!isNaN(Number(key))) {
-      delete clone[key as keyof typeof clone]
+      delete clone[key as keyof typeof clone];
     }
-  })
-  return clone
-}
+  });
+  return clone;
+};
 
-const FIELDS = fetchFields()
+const FIELDS = fetchFields();
 
-const mapFields = (input: string[]) => {
-  return input.map((field) => {
-    return Object.keys(FIELDS).find(
-      (key) => FIELDS[key as keyof typeof FIELDS] === field,
+const mapFields = (input: string[]) =>
+  input.map((field) =>
+    Object.keys(FIELDS).find(
+      (key) => FIELDS[key as keyof typeof FIELDS] === field
     )
-  })
-}
+  );
 
 const getFolders = (input: any[], path: string) => {
-  const ignoreFolders = ['System Volume Information']
+  const ignoreFolders = ["System Volume Information"];
   const folders = input
     .filter(
       (entry: any) =>
-        !entry.name.startsWith('.') && !ignoreFolders.includes(entry.name),
+        !(entry.name.startsWith(".") || ignoreFolders.includes(entry.name))
     )
-    .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+    .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
   return folders.map((entry) => ({
     ...entry,
-    path: [path, entry.name].join('/').replace('//', '/'),
-  }))
-}
+    path: [path, entry.name].join("/").replace("//", "/"),
+  }));
+};
 
 const getFiles = (input: any[], path: string) => {
   const files = input
-    .filter((entry: any) => !entry.name.startsWith('.'))
-    .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+    .filter((entry: any) => !entry.name.startsWith("."))
+    .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
   return files.map((entry) => ({
     ...entry,
-    path: [path, entry.name].join('/').replace('//', '/'),
-  }))
-}
+    path: [path, entry.name].join("/").replace("//", "/"),
+  }));
+};
 
 const validatePath = (path: string) => {
   try {
     if (path.length === 0) {
-      throw new Error('No path provided')
+      throw new Error("No path provided");
     }
-    return true
+    return true;
   } catch (err: unknown) {
-    const error = err as Error
-    console.error(`Could not validate path '${path}':`, error.message)
-    throw error
+    const error = err as Error;
+    console.error(`Could not validate path '${path}':`, error.message);
+    throw error;
   }
-}
+};
 
 class SNIClient {
-  transport: GrpcWebFetchTransport
-  clients: any
+  transport: GrpcWebFetchTransport;
+  clients: any;
 
   constructor() {
-    this.transport = setupTransport()
-    this.clients = setupClients(this.transport)
+    this.transport = setupTransport();
+    this.clients = setupClients(this.transport);
 
-    return this
+    return this;
   }
 
-  async currentScreen (uri: string) {
+  async currentScreen(uri: string) {
     try {
-      const req = await this.getFields(uri, ['RomFileName'])
-      if (req.values[0] !== '/sd2snes/m3nu.bin') {
-        return 'game'
+      const req = await this.getFields(uri, ["RomFileName"]);
+      if (req.values[0] !== "/sd2snes/m3nu.bin") {
+        return "game";
       }
-      return 'menu'
+      return "menu";
     } catch (err: unknown) {
-      const error = err as Error
-      console.error('currentScreen', error.message)
-      return 'menu'
+      const error = err as Error;
+      console.error("currentScreen", error.message);
+      return "menu";
     }
   }
 
-  async bootFile (uri: string, path: string) {
-    validatePath(path)
-  
-    const req = SNI.BootFileRequest.create({ uri, path })
-    await this.clients.DeviceFilesystem.bootFile(req)
-    return path
-  }
-  
-  async deleteFile (uri: string, path: string) {
-    validatePath(path)
-  
-    const req = SNI.RemoveFileRequest.create({ uri, path })
-    await this.clients.DeviceFilesystem.removeFile(req)
-    return path
+  async bootFile(uri: string, path: string) {
+    validatePath(path);
+
+    const req = SNI.BootFileRequest.create({ uri, path });
+    await this.clients.DeviceFilesystem.bootFile(req);
+    return path;
   }
 
-  async getFields (uri: string, inputFields: string[]) {
+  async deleteFile(uri: string, path: string) {
+    validatePath(path);
+
+    const req = SNI.RemoveFileRequest.create({ uri, path });
+    await this.clients.DeviceFilesystem.removeFile(req);
+    return path;
+  }
+
+  async getFields(uri: string, inputFields: string[]) {
     const fields = inputFields.filter(
-      (field) => FIELDS[field as keyof typeof FIELDS],
-    )
+      (field) => FIELDS[field as keyof typeof FIELDS]
+    );
     if (fields.length === 0) {
-      throw new Error('No valid fields provided')
+      throw new Error("No valid fields provided");
     }
     // TODO: Read fields from here
-    const req = SNI.FieldsRequest.create({ uri, fields: [SNI.Field.RomFileName] })
-    const call = await this.clients.DeviceInfo.fetchFields(req)
-    return call.response
+    const req = SNI.FieldsRequest.create({
+      uri,
+      fields: [SNI.Field.RomFileName],
+    });
+    const call = await this.clients.DeviceInfo.fetchFields(req);
+    return call.response;
   }
 
   async listDevices(kinds?: string[]) {
     try {
-      const req = SNI.DevicesRequest.create({ kinds })
-      const devicesCall = await this.clients.Devices.listDevices(req)
+      const req = SNI.DevicesRequest.create({ kinds });
+      const devicesCall = await this.clients.Devices.listDevices(req);
       const devices: any[] = devicesCall.response.devices.map((device: any) => {
-        const rawCapabilities = device.capabilities
-        const capabilities = mapCapabilities(device.capabilities)
-        return { ...device, capabilities, rawCapabilities }
-      })
+        const rawCapabilities = device.capabilities;
+        const capabilities = mapCapabilities(device.capabilities);
+        return { ...device, capabilities, rawCapabilities };
+      });
 
       return {
         connected: devices.length > 0,
         devices,
         // TODO: Make this configurable and rememberable
         current: devices[0],
-      }
-
+      };
     } catch (err: unknown) {
-      const error = err as Error
-      console.debug('SNI.listDevices error', error)
-      throw new Error('No Connection')
+      const error = err as Error;
+      console.debug("SNI.listDevices error", error);
+      throw new Error("No Connection");
     }
   }
 
-  async putFile (uri: string, path: string, fileContents: Uint8Array) {
+  async putFile(uri: string, path: string, fileContents: Uint8Array) {
     if (path.length === 0) {
-      throw new Error('Invalid path')
+      throw new Error("Invalid path");
     }
-  
-    const req = SNI.PutFileRequest.create({ uri, path, data: fileContents })
-    await this.clients.DeviceFilesystem.putFile(req)
-    return path
+
+    const req = SNI.PutFileRequest.create({ uri, path, data: fileContents });
+    await this.clients.DeviceFilesystem.putFile(req);
+    return path;
   }
 
-  async readDirectory (uri: string, path: string, retryCount: number = 0): Promise<any> {
-    const self = this
+  async readDirectory(uri: string, path: string, retryCount = 0): Promise<any> {
     try {
-      const req = SNI.ReadDirectoryRequest.create({ path, uri })
-      const call = await this.clients.DeviceFilesystem.readDirectory(req)
-      const data = call.response.entries
-      const rawFiles = data.filter((entry: any) => entry.type === 1)
-      const rawFolders = data.filter((entry: any) => entry.type === 0)
-      const folders = getFolders(rawFolders, path)
-      const files = getFiles(rawFiles, path)
-      return folders.concat(files)
+      const req = SNI.ReadDirectoryRequest.create({ path, uri });
+      const call = await this.clients.DeviceFilesystem.readDirectory(req);
+      const data = call.response.entries;
+      const rawFiles = data.filter((entry: any) => entry.type === 1);
+      const rawFolders = data.filter((entry: any) => entry.type === 0);
+      const folders = getFolders(rawFolders, path);
+      const files = getFiles(rawFiles, path);
+      return folders.concat(files);
     } catch (err: unknown) {
-      const error = err as Error
+      const error = err as Error;
       // The error `fxpakpro: device not configured` is thrown when the device is not ready
       // Retry the request up to 3 times then throw an error
-      const fxpakproNotReady = error.message === 'fxpakpro: device not configured'
+      const fxpakproNotReady =
+        error.message === "fxpakpro: device not configured";
       if (fxpakproNotReady && retryCount < 3) {
-        return self.readDirectory(uri, path, retryCount + 1)
+        return this.readDirectory(uri, path, retryCount + 1);
       }
-      throw new Error('Could not read directory')
+      throw new Error("Could not read directory");
     }
   }
 
   async resetSystem(uri: string) {
-    const req = SNI.ResetSystemRequest.create({ uri })
-    const call = await this.clients.DeviceControl.resetSystem(req)
-    return call.response
+    const req = SNI.ResetSystemRequest.create({ uri });
+    const call = await this.clients.DeviceControl.resetSystem(req);
+    return call.response;
   }
 
-  async resetToMenu (uri: string) {
-    const req = SNI.ResetToMenuRequest.create({ uri })
-    const call = await this.clients.DeviceControl.resetToMenu(req)
-    return call.response
+  async resetToMenu(uri: string) {
+    const req = SNI.ResetToMenuRequest.create({ uri });
+    const call = await this.clients.DeviceControl.resetToMenu(req);
+    return call.response;
   }
 }
 
-export default SNIClient
+export default SNIClient;

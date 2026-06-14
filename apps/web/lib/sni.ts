@@ -1,40 +1,40 @@
-'use client'
+"use client";
 
-import SNIClient from '@repo/sni'
-import useSWR from 'swr'
+import SNIClient from "@repo/sni";
+import useSWR from "swr";
 
-let CLIENT = new SNIClient()
+const CLIENT = new SNIClient();
 
-export const SNI = CLIENT
+export const SNI = CLIENT;
 
 const fetcher = async (key: string | string[] | null) => {
   if (!key) {
-    return null
+    return null;
   }
   switch (true) {
-    case key === 'devices':
-      return await SNI.listDevices()
-    case key.includes('readDirectory'):
-      if (!key[1] || !key[2]) {
-        throw new Error('Invalid URI or path')
+    case key === "devices":
+      return await SNI.listDevices();
+    case key.includes("readDirectory"):
+      if (!(key[1] && key[2])) {
+        throw new Error("Invalid URI or path");
       }
       return {
         data: await SNI.readDirectory(key[2], key[1]),
-      }
-    case key.includes('currentScreen'):
+      };
+    case key.includes("currentScreen"):
       if (!key[1]) {
-        throw new Error('Invalid URI')
+        throw new Error("Invalid URI");
       }
-      return { data: await SNI.currentScreen(key[1]) }
+      return { data: await SNI.currentScreen(key[1]) };
     default:
-      return null
+      return null;
   }
-}
+};
 
 export const useSNI = (key: string | string[], opts?: object) => {
   const { data, ...hook } = useSWR(key, {
     ...opts,
     fetcher,
-  })
-  return { ...data, ...hook }
-}
+  });
+  return { ...data, ...hook };
+};
