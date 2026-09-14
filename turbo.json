@@ -16,6 +16,9 @@
       "cache": false,
       "persistent": true
     },
-    "lint": {}
+    "lint": {},
+    "typecheck": {
+      "cache": false
+    }
   }
 }

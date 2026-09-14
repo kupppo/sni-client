@@ -192,7 +192,7 @@ function FileTree({
   path: string
   setCurrentFile?: any
   depth?: number
-}): JSX.Element {
+}) {
   const { mutate } = useSWRConfig()
   const { data, isLoading, error } = useSNI(['readDirectory', path, uri])
 
@@ -419,7 +419,7 @@ export function Drawer({
   )
 }
 
-export default function FileTreeWrapper(): JSX.Element | null {
+export default function FileTreeWrapper() {
   const { mutate } = useSWRConfig()
   const data = useSNI('devices', { refreshInterval: 50 })
   const currentScreen = useSNI(['currentScreen', data?.current?.uri], {

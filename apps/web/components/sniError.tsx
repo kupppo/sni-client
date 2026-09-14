@@ -1,4 +1,4 @@
-export default function SNIError({ error }: { error: Error }): JSX.Element {
+export default function SNIError({ error }: { error: Error }) {
   if (error.message.includes('Missing Filesystem Capabilities')) {
     return <div>Missing Filesystem Capabilities</div>
   }

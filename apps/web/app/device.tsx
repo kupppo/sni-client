@@ -15,7 +15,7 @@ const Value = (props: PropsWithChildren) => (
   <span className="font-mono text-sm">{props.children}</span>
 )
 
-export default function DeviceView(): JSX.Element {
+export default function DeviceView() {
   const data = useSNI('devices', { refreshInterval: 50 })
   const connected = data?.connected
 
