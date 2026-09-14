@@ -2,5 +2,5 @@ packages:
   - 'apps/*'
   - 'packages/*'
 allowBuilds:
-  '@sentry/cli': false
+  '@sentry/cli': true
   esbuild: false
