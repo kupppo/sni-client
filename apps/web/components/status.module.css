@@ -1,30 +1,30 @@
 .base {
-  display: inline-flex;
-  align-items: center;
   --size: 8px;
   --type: 12px;
   --color: #333;
+  display: inline-flex;
+  align-items: center;
 }
 
 .dot {
   display: block;
   width: var(--size);
   height: var(--size);
-  border-radius: 50%;
   background-color: var(--color);
+  border-radius: 50%;
   transition: background-color 0.15s ease-in-out;
 }
 
 .label {
+  display: block;
+  width: 100px;
+  margin-left: 12px;
+  overflow: hidden;
   font-size: var(--type);
   font-weight: normal;
-  letter-spacing: 0.35px;
-  margin-left: 12px;
-  width: 100px;
-  overflow: hidden;
-  display: block;
-  animation: statusIn 0.3s ease-in-out;
   text-align: left;
+  letter-spacing: 0.35px;
+  animation: statusIn 0.3s ease-in-out;
 }
 
 .mounted .label {

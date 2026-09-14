@@ -1,18 +1,23 @@
 import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport'
-import { SNI, Clients } from './lib'
+import { Clients, SNI } from './lib'
 
 export type DeviceKind = 'fxpakpro' | 'luabridge' | 'retroarch'
 
-function setupTransport(baseUrl: string = 'http://localhost:8190') {
+function setupTransport(baseUrl = 'http://localhost:8190') {
   return new GrpcWebFetchTransport({ baseUrl })
 }
 
 function setupClients(transport: GrpcWebFetchTransport) {
-  return Object.keys(Clients).reduce((acc, key) => {
-    const clientKey = key.replace('Client', '')
-    acc[clientKey as string] = new Clients[key as keyof typeof Clients](transport)
-    return acc
-  }, {} as Record<string, any>)
+  return Object.keys(Clients).reduce(
+    (acc, key) => {
+      const clientKey = key.replace('Client', '')
+      acc[clientKey as string] = new Clients[key as keyof typeof Clients](
+        transport
+      )
+      return acc
+    },
+    {} as Record<string, any>
+  )
 }
 
 const CAPABILITIES = {
@@ -36,11 +41,11 @@ const CAPABILITIES = {
 }
 
 const mapCapabilities = (input: number[]) =>
-  input.map((capability) => {
-    return Object.keys(CAPABILITIES).find(
-      (key) => CAPABILITIES[key as keyof typeof CAPABILITIES] === capability,
+  input.map((capability) =>
+    Object.keys(CAPABILITIES).find(
+      (key) => CAPABILITIES[key as keyof typeof CAPABILITIES] === capability
     )
-  })
+  )
 
 const fetchFields = () => {
   const clone = { ...SNI.Field }
@@ -55,20 +60,19 @@ const fetchFields = () => {
 
 const FIELDS = fetchFields()
 
-const mapFields = (input: string[]) => {
-  return input.map((field) => {
-    return Object.keys(FIELDS).find(
-      (key) => FIELDS[key as keyof typeof FIELDS] === field,
+const mapFields = (input: string[]) =>
+  input.map((field) =>
+    Object.keys(FIELDS).find(
+      (key) => FIELDS[key as keyof typeof FIELDS] === field
     )
-  })
-}
+  )
 
 const getFolders = (input: any[], path: string) => {
   const ignoreFolders = ['System Volume Information']
   const folders = input
     .filter(
       (entry: any) =>
-        !entry.name.startsWith('.') && !ignoreFolders.includes(entry.name),
+        !(entry.name.startsWith('.') || ignoreFolders.includes(entry.name))
     )
     .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
   return folders.map((entry) => ({
@@ -111,7 +115,7 @@ class SNIClient {
     return this
   }
 
-  async currentScreen (uri: string) {
+  async currentScreen(uri: string) {
     try {
       const req = await this.getFields(uri, ['RomFileName'])
       if (req.values[0] !== '/sd2snes/m3nu.bin') {
@@ -125,31 +129,34 @@ class SNIClient {
     }
   }
 
-  async bootFile (uri: string, path: string) {
+  async bootFile(uri: string, path: string) {
     validatePath(path)
-  
+
     const req = SNI.BootFileRequest.create({ uri, path })
     await this.clients.DeviceFilesystem.bootFile(req)
     return path
   }
-  
-  async deleteFile (uri: string, path: string) {
+
+  async deleteFile(uri: string, path: string) {
     validatePath(path)
-  
+
     const req = SNI.RemoveFileRequest.create({ uri, path })
     await this.clients.DeviceFilesystem.removeFile(req)
     return path
   }
 
-  async getFields (uri: string, inputFields: string[]) {
+  async getFields(uri: string, inputFields: string[]) {
     const fields = inputFields.filter(
-      (field) => FIELDS[field as keyof typeof FIELDS],
+      (field) => FIELDS[field as keyof typeof FIELDS]
     )
     if (fields.length === 0) {
       throw new Error('No valid fields provided')
     }
     // TODO: Read fields from here
-    const req = SNI.FieldsRequest.create({ uri, fields: [SNI.Field.RomFileName] })
+    const req = SNI.FieldsRequest.create({
+      uri,
+      fields: [SNI.Field.RomFileName],
+    })
     const call = await this.clients.DeviceInfo.fetchFields(req)
     return call.response
   }
@@ -170,7 +177,6 @@ class SNIClient {
         // TODO: Make this configurable and rememberable
         current: devices[0],
       }
-
     } catch (err: unknown) {
       const error = err as Error
       console.debug('SNI.listDevices error', error)
@@ -178,18 +184,17 @@ class SNIClient {
     }
   }
 
-  async putFile (uri: string, path: string, fileContents: Uint8Array) {
+  async putFile(uri: string, path: string, fileContents: Uint8Array) {
     if (path.length === 0) {
       throw new Error('Invalid path')
     }
-  
+
     const req = SNI.PutFileRequest.create({ uri, path, data: fileContents })
     await this.clients.DeviceFilesystem.putFile(req)
     return path
   }
 
-  async readDirectory (uri: string, path: string, retryCount: number = 0): Promise<any> {
-    const self = this
+  async readDirectory(uri: string, path: string, retryCount = 0): Promise<any> {
     try {
       const req = SNI.ReadDirectoryRequest.create({ path, uri })
       const call = await this.clients.DeviceFilesystem.readDirectory(req)
@@ -203,9 +208,10 @@ class SNIClient {
       const error = err as Error
       // The error `fxpakpro: device not configured` is thrown when the device is not ready
       // Retry the request up to 3 times then throw an error
-      const fxpakproNotReady = error.message === 'fxpakpro: device not configured'
+      const fxpakproNotReady =
+        error.message === 'fxpakpro: device not configured'
       if (fxpakproNotReady && retryCount < 3) {
-        return self.readDirectory(uri, path, retryCount + 1)
+        return this.readDirectory(uri, path, retryCount + 1)
       }
       throw new Error('Could not read directory')
     }
@@ -217,7 +223,7 @@ class SNIClient {
     return call.response
   }
 
-  async resetToMenu (uri: string) {
+  async resetToMenu(uri: string) {
     const req = SNI.ResetToMenuRequest.create({ uri })
     const call = await this.clients.DeviceControl.resetToMenu(req)
     return call.response

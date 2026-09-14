@@ -1,9 +1,9 @@
 'use client'
 
-import { VariantProps, cva } from 'class-variance-authority'
+import { cva, type VariantProps } from 'class-variance-authority'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import styles from './status.module.css'
-import { useEffect, useState } from 'react'
 
 export interface StatusProps extends VariantProps<typeof dotVariants> {
   label?: string
@@ -41,12 +41,12 @@ const Status = ({ label, status, size }: StatusProps) => {
       className={cn(
         dotVariants({ status, size }),
         loading && styles.loading,
-        mounted && styles.mounted,
+        mounted && styles.mounted
       )}
     >
       <span className={styles.dot} />
       {label && (
-        <span key={label} className={styles.label}>
+        <span className={styles.label} key={label}>
           {label}
         </span>
       )}
