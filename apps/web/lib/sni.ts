@@ -3,7 +3,7 @@
 import SNIClient from '@repo/sni'
 import useSWR from 'swr'
 
-let CLIENT = new SNIClient()
+const CLIENT = new SNIClient()
 
 export const SNI = CLIENT
 
@@ -15,7 +15,7 @@ const fetcher = async (key: string | string[] | null) => {
     case key === 'devices':
       return await SNI.listDevices()
     case key.includes('readDirectory'):
-      if (!key[1] || !key[2]) {
+      if (!(key[1] && key[2])) {
         throw new Error('Invalid URI or path')
       }
       return {

@@ -1,1 +1,3 @@
 .env.sentry-build-plugin
+next-env.d.ts
+
